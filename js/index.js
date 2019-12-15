@@ -32,6 +32,14 @@ Modernizr.on('webp', function(result) {
     }
 });
 
+var $login = $('#log-in');
+var $logout = $('#log-out');
+var $log_out_span = $('#log-out-span');
+$log_out_span.on('click', function () {
+    console.log("utente ha fatto il logout");
+    sessionStorage.removeItem("nickname");
+    window.location.reload();
+});
 $(window).on('load', function () {
     // set proper height for the filterBox
     $('#filterBox').css({
@@ -59,6 +67,17 @@ $(window).on('load', function () {
 
     if (currentPage === "/site/progetto/") // because in opera_page we need to wait for the images to be loaded
         showTutorial(currentPage);
+
+
+    if(sessionStorage["nickname"]){
+        $login.html(sessionStorage.getItem("nickname")).attr("href", "#");
+        $logout.html(" logout").attr("href", "#");
+        console.log("utente ha fatto il login");
+    }else {
+        $login.html("SingIn").attr("href", "login/login.html");
+        $logout.html("SingUp").attr("href", "./registration/registration.html");
+        console.log("aspetta che faccia il login");
+    }
 });
 
 var $searchBox = $('#searchBox');
