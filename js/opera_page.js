@@ -115,7 +115,7 @@ $(window).on('load', function () {
         .prepend(
             $('<span id="backBtn"></span>')
                 .on('click', function () {
-                    window.history.back();
+                    window.location = "./";
                 })
         );
 
@@ -174,7 +174,8 @@ $(window).on('load', function () {
             );
         setBoxHeight();
 
-        showTutorial(currentPage); // wait for the operaWrap to be filled to get the correct position for tutorials
+        if (sessionStorage.getItem("nickname"))
+            showTutorial(currentPage); // wait for the operaWrap to be filled to get the correct position for tutorials
     });
 
 });

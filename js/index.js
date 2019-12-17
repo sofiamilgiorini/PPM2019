@@ -32,14 +32,6 @@ Modernizr.on('webp', function(result) {
     }
 });
 
-var $login = $('#log-in');
-var $logout = $('#log-out');
-var $log_out_span = $('#log-out-span');
-$log_out_span.on('click', function () {
-    console.log("utente ha fatto il logout");
-    sessionStorage.removeItem("nickname");
-    window.location.reload();
-});
 $(window).on('load', function () {
     // set proper height for the filterBox
     $('#filterBox').css({
@@ -69,15 +61,35 @@ $(window).on('load', function () {
         showTutorial(currentPage);
 
 
-    if(sessionStorage["nickname"]){
-        $login.html(sessionStorage.getItem("nickname")).attr("href", "#");
-        $logout.html(" logout").attr("href", "#");
-        console.log("utente ha fatto il login");
-    }else {
-        $login.html("SingIn").attr("href", "login/login.html");
-        $logout.html("SingUp").attr("href", "./registration/registration.html");
-        console.log("aspetta che faccia il login");
+    // check if user is logged in
+    var $hW = $('#headerWrapper');
+    var user = sessionStorage.getItem("nickname");
+    var $topBtn = $('<span id="topBtn"></span>');
+    if (user) {
+        if (currentPage.includes("opera_page")) {
+            $topBtn.append('Prendi appunti');
+        }
+        else {
+            $topBtn.append(
+                $('<span id="logout">Esci</span>')
+                .on('click', function () {
+                    sessionStorage.removeItem("nickname");
+                    window.location.reload();
+                })
+            );
+            $hW.append(
+                $('<div id="greet">Benvenuto ' + user + '!</div>'));
+        }
     }
+    else {
+        $topBtn.append(
+            $('<a href="login/login.html">Accedi</a>')
+                .on('click', function () {
+                    sessionStorage.setItem("loggedFrom", window.location) // save page to go back there after the login
+                })
+        );
+    }
+    $hW.append($topBtn);
 });
 
 var $searchBox = $('#searchBox');
@@ -142,10 +154,10 @@ function showTutorial(page) {
 
     // load correct images based on page
     if (page.includes("opera_page")) {
-        var $noteBtn = $('#noteBtn');
+        var $topBtn = $('#topBtn');
         var $opera_page_1 = $('<img src="./img/tutorial/opera_page/opera_page_1.png">')
             .css({
-                'top': $noteBtn.offset().top + $noteBtn.outerHeight()
+                'top': $topBtn.offset().top + $topBtn.outerHeight()
             });
 
         var $readDescBtn = $('#readDescBtn');
@@ -161,7 +173,7 @@ function showTutorial(page) {
             });
 
         $tutorial.append([$opera_page_1, $opera_page_2, $opera_page_3]);
-        setOffset($opera_page_1, $noteBtn);
+        setOffset($opera_page_1, $topBtn);
         setOffset($opera_page_2, $readDescBtn);
         setOffset($opera_page_3, $artImage);
 
