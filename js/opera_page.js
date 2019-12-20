@@ -190,6 +190,7 @@ function setBoxHeight() {
     $filterBox.css('height', '');
 }
 
+/*
 $('#filterBox').on('click', '.operaCanvas', function (e) {
     e.stopImmediatePropagation();
 
@@ -225,6 +226,91 @@ $('#filterBox').on('click', '.operaCanvas', function (e) {
         setBoxHeight();
     } else {
         canvas.toggleDetails();
+    }
+});
+*/
+
+$('#noteBtn').on('click', function () {
+    var canv = canvas.element[0];
+    var context = canvas.context;
+    var arrX = [];
+    var arrY = [];
+    var larghezzaLinea = 4;
+    var puntoInizioDisegnoX = null;
+    var puntoInizioDisegnoY = null;
+    var posizioneCorrenteMouseX = null;
+    var posizioneCorrenteMouseY = null;
+    var touch = false;
+
+    function disegna(){
+        console.log('disegna');
+        context.beginPath();
+        context.moveTo(puntoInizioDisegnoX, puntoInizioDisegnoY);
+        context.lineTo(posizioneCorrenteMouseX, posizioneCorrenteMouseY);
+        context.strokeStyle = "#FF0000";
+        context.lineWidth = larghezzaLinea;
+        context.stroke();
+        context.closePath();
+    }
+
+
+    function cancella(){
+        context.clearRect(0, 0, canv.width, canv.height);
+        context.drawImage($img[0], 0, 0, canvas.width, canvas.height);
+    }
+
+    $(canv).bind('touchmove touchstart touchend', function (e) {
+        console.log(e.type);
+        var event = e.originalEvent.touches[0];
+        var $parent = $(this).parent();
+        switch(e.type) {
+            case 'touchmove':
+                if (touch) {
+                    puntoInizioDisegnoX = posizioneCorrenteMouseX;
+                    arrX.push(puntoInizioDisegnoX);
+                    puntoInizioDisegnoY = posizioneCorrenteMouseY;
+                    arrY.push(puntoInizioDisegnoY);
+                    posizioneCorrenteMouseX = event.pageX - $parent.offset().left;
+                    arrX.push(posizioneCorrenteMouseX);
+                    posizioneCorrenteMouseY = event.pageY - $parent.offset().top;
+                    arrY.push(posizioneCorrenteMouseY);
+                    disegna();
+                }
+                break;
+            case 'touchstart':
+                touch = true;
+                posizioneCorrenteMouseX = event.pageX - $parent.offset().left;
+                posizioneCorrenteMouseY = event.pageY - $parent.offset().top;
+                console.log(posizioneCorrenteMouseX);
+                console.log(posizioneCorrenteMouseY);
+                break;
+            case 'touchend':
+                if (touch) {
+                    var minCoordinataX = Math.min.apply(null, arrX);
+                    var minCoordinataY = Math.min.apply(null, arrY);
+                    var maxCoordinataX = Math.max.apply(null, arrX);
+                    var maxCoordinataY = Math.max.apply(null, arrY);
+                    var rectWidth = maxCoordinataX-minCoordinataX;
+                    var rectHeight = maxCoordinataY-minCoordinataY;
+                    cancella();
+                    context.beginPath();
+                    context.lineWidth = 2;
+                    context.strokeStyle = "#FFFF00";
+                    context.rect(minCoordinataX, minCoordinataY, rectWidth, rectHeight);
+                    context.stroke();
+                    context.closePath();
+                    arrX = [];
+                    arrY = [];
+                    var detail = {x: minCoordinataX, y: minCoordinataY, width: rectWidth*100/canvas.width, height: rectHeight*100/canvas.height};
+                    drawInputs(detail);
+                }
+                touch = false;
+                break;
+        }
+    });
+
+    function drawInputs(detail) {
+
     }
 });
 
