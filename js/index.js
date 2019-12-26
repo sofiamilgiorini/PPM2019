@@ -88,7 +88,7 @@ $(window).on('load', function () {
     }
     $hW.append($topBtn);
 
-    if (currentPage === "/site/progetto/") // because in opera_page we need to wait for the images to be loaded
+    if (!currentPage.includes("opera_page")) // because in opera_page we need to wait for the images to be loaded
         showTutorial(currentPage);
 });
 
