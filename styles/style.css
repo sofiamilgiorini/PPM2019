@@ -81,14 +81,57 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: space-between;
     width: 100%;
     height: 100%;
     max-width: 1024px;
     margin: auto;
 }
 
+#backBtn {
+    display: block;
+    width: 30px;
+    height: 30px;
+    margin-left: 10px;
+    content: "";
+    background: #212c65;
+    mask: url(../img/icons/arrow-left.svg);
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+    -webkit-mask: url(../img/icons/arrow-left.svg) center no-repeat;
+    -webkit-mask-size: contain;
+    cursor: pointer;
+}
+
 #headerWrapper h1 {
+    margin-right: auto;
     margin-left: 15px;
+}
+
+#headerWrapper a {
+    text-decoration: none;
+    color: #feff9f;
+}
+
+#headerWrapper #greet {
+    margin-right: 15px;
+}
+
+#headerWrapper #logout {
+    cursor: pointer;
+}
+
+#topBtn {
+    display: block;
+    align-self: flex-start;
+    margin-right: 15px;
+    padding: 8px;
+    background-color: #3498db;
+    border-radius: 0 0 4px 4px;
+    color: #feff9f;
+    white-space: nowrap;
+    cursor: pointer;
 }
 
 #wrapper {

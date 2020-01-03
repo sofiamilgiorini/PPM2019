@@ -1,0 +1,33 @@
+input, a {
+    align-self: center;
+    width: 80%;
+    height: 30px;
+    margin-top: 10px;
+    border-radius: 100px;
+    font-family: Calibri, sans-serif;
+    font-size: 14px;
+}
+
+input[type=text], input[type=password] {
+    padding-left: 8px;
+    border: 1px solid grey;
+    outline: none;
+}
+
+input[type=text]:focus, input[type=password]:focus {
+    box-shadow: 0 0 2px 0 #007eff;
+}
+
+input[type=button] {
+    border: none;
+    color: #fff;
+    background-color: #3f51b5;
+}
+
+a {
+    color: #fff;
+    text-align: center;
+    text-decoration: none;
+    background-color: #26316d;
+    line-height: 30px;
+}

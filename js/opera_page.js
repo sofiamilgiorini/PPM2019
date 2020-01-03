@@ -1,11 +1,17 @@
 var opera = Opera[operaID];
+var $filterBox;
+var $artImage;
 var $img;
 var $div;
 
 var canvas = {
     element: $(document.createElement('canvas'))
-        .attr('class', 'operaCanvas')
+        .attr('id', 'operaCanvas')
         .text('Il tuo browser è troppo vecchio!'),
+    setElement: function (e) {
+        this.element = e;
+        this.context = e[0].getContext("2d");
+    },
     setWidth: function (w) {
         this.width = w;
         this.element[0].width = w;
@@ -22,7 +28,7 @@ var canvas = {
             var det = Opera[operaID].dettagli;
             if (Opera[operaID].hasOwnProperty("dettagli")) {
                 this.detailsShown = true;
-                this.context.lineWidth = "2";
+                this.context.lineWidth = 2;
                 this.context.strokeStyle = "yellow";
                 for (var i in det) {
                     this.context.strokeRect(det[i].x/100*this.width,det[i].y/100*this.height,det[i].width/100*this.width,det[i].height/100*this.height);
@@ -91,14 +97,15 @@ var canvas = {
                 'class': 'operaCanvas'
             });
             canvasNew.getContext("2d").drawImage(betterImg, -l*propX, -t*propY, canvas.width*propX, canvas.height*propY, 0, 0, canvas.width, canvas.height);
-            $imgWrap.append(canvasNew);
+            $artImage.append(canvasNew);
         }
 
     }
 };
-var $imgWrap = $('#artImage');
 
 $(window).on('load', function () {
+    $filterBox = $('#filterBox');
+    $artImage = $('#artImage');
     $img = $(document.createElement("img"))
         .attr({
             'id': 'operaImage',
@@ -116,7 +123,7 @@ $(window).on('load', function () {
         .prepend(
             $('<span id="backBtn"></span>')
                 .on('click', function () {
-                    window.history.back();
+                    window.location = "./";
                 })
         );
 
@@ -141,9 +148,9 @@ $(window).on('load', function () {
 
     // print a loader while the image is being downloaded;
     // if the opera has no image print it and return
-    $imgWrap.html('<div class="loader"></div>');
+    $artImage.html('<div class="loader"></div>');
     if (opera.img === "") {
-        $imgWrap
+        $artImage
             .css({'font-size': '12px',
                 'text-align': 'center'
                 }
@@ -154,20 +161,20 @@ $(window).on('load', function () {
 
     // print the image to get dimensions
     // html5 source to fetch the right image based on the screen dimension
-    $imgWrap.html($img);
+    $artImage.html($img);
 
     $img.on('load', function () {
         // FIXME: on iOS 9 the image appears to have height=0 when inserted in the div, so canvas will not be visible
-        $imgWrap.css({
+        $artImage.css({
             'width': $img.width(),
             'height': $img.height()
         });
         canvas.setWidth($img.width());
         canvas.setHeight($img.height());
         canvas.context = canvas.element[0].getContext("2d");
-        canvas.context.drawImage($img[0], 0, 0, $imgWrap.width(), $imgWrap.height());
+        canvas.context.drawImage($img[0], 0, 0, $artImage.width(), $artImage.height());
 
-        $imgWrap
+        $artImage
             .html(canvas.element)
             .after($(document.createElement("span"))
                     .attr('id', 'canvasInfo')
@@ -175,14 +182,44 @@ $(window).on('load', function () {
             );
         setBoxHeight();
 
-        showTutorial(currentPage); // wait for the operaWrap to be filled to get the correct position for tutorials
-    });
+        if (sessionStorage.getItem("nickname")) {
+            showTutorial(currentPage); // wait for the operaWrap to be filled to get the correct position for tutorials
 
+            // bind functions to the topBtn to start and stop taking notes
+            function startNote(e, $t) {
+                e.stopImmediatePropagation();
+                $t.text('Fine')
+                    .css('background-color', '#a02f2f');
+                canvas.enlarge();
+                takeNotes();
+                $t.off().on('click', function () {
+                    stopNote(e, $t);
+                });
+            }
+
+            function stopNote(e, $t) {
+                e.stopImmediatePropagation();
+                $t.text('Prendi appunti')
+                    .css('background-color', '#3498db');
+                canvas.element.off('touchmove touchstart touchend'); // disable canvas draw interactions
+
+                canvas.restore();
+
+                $t.off().on('click', function () {
+                    startNote(e, $t);
+                });
+            }
+
+            $('#topBtn').on('click', function (e) {
+                startNote(e, $(this));
+            });
+        }
+
+    });
 });
 
 function setBoxHeight() {
     // calculate the correct description height to fill the screen
-    var $filterBox = $('#filterBox');
     var filterBoxMaxHeight = $('#wrapper').height();
     $filterBox.outerHeight(filterBoxMaxHeight, true);
     $filterBox.css('max-height', filterBoxMaxHeight+'px');
@@ -192,7 +229,7 @@ function setBoxHeight() {
 }
 
 /*
-$('#filterBox').on('click', '.operaCanvas', function (e) {
+$('#filterBox').on('click', '#operaCanvas', function (e) {
     e.stopImmediatePropagation();
 
     // check if a detail has been clicked and draw it
@@ -231,85 +268,168 @@ $('#filterBox').on('click', '.operaCanvas', function (e) {
 });
 */
 
-$('#noteBtn').on('click', function () {
-    var canv = canvas.element[0];
-    var context = canvas.context;
-    var arrX = [];
-    var arrY = [];
-    var larghezzaLinea = 4;
-    var puntoInizioDisegnoX = null;
-    var puntoInizioDisegnoY = null;
-    var posizioneCorrenteMouseX = null;
-    var posizioneCorrenteMouseY = null;
-    var touch = false;
+canvas.enlarge = function () {
+    // enlarge canvas
+    $searchBox.hide();
+    $('#operaWrap').children().not('#artImage').hide();
+    $filterBox.data('css', $filterBox.attr('style')); // save style to restore
+    $filterBox.css({
+        'margin-top': '',
+        'height': '100%',
+        'flex-grow': 1
+    });
+    $artImage.data('css', $artImage.attr('style'));
+    $artImage.css({
+        'height': '100%',
+        'flex-grow': 1
+    });
+    canvas.element.data('prevHeight', canvas.height); // save previous height to restore
+    canvas.setHeight($artImage.height());
+    canvas.element.data('virtualWidth', canvas.width*canvas.height/canvas.element.data('prevHeight')); // new image width based on height increment
+    canvas.context.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.context.drawImage($img[0], 0, 0, canvas.element.data('virtualWidth'), canvas.height);
+};
+canvas.restore = function () {
+    // restore normal view
+    $searchBox.show();
+    $('#operaWrap').children().not('#artImage').show();
+    $filterBox.attr('style', $filterBox.data('css'));
+    $artImage.attr('style', $artImage.data('css'));
+    canvas.setHeight(canvas.element.data('prevHeight'));
+    canvas.context.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.context.drawImage($img[0], 0, 0, canvas.width, canvas.height);
+};
 
-    function disegna(){
-        console.log('disegna');
+function takeNotes() {
+    var $canvas = canvas.element;
+    var context = canvas.context;
+    var $parent = $canvas.parent();
+    var larghezzaLinea = 4;
+    $canvas.data('moveX', 0); // image horizontal offset when swiping with two fingers
+    $canvas.data('oldMoveX', 0);
+
+    function Touch (obj) {
+        this.id = obj.identifier;
+        this.pageX = obj.pageX;
+        this.pageY = obj.pageY;
+        this.puntoInizioDisegnoX = null;
+        this.puntoInizioDisegnoY = null;
+        this.posizioneCorrenteMouseX = this.pageX - $parent.offset().left;
+        this.posizioneCorrenteMouseY = this.pageY - $parent.offset().top;
+        this.arrX = [this.posizioneCorrenteMouseX];
+        this.arrY = [this.posizioneCorrenteMouseY];
+    }
+
+    Touch.prototype.setPos = function (pos) {
+        this.puntoInizioDisegnoX = this.posizioneCorrenteMouseX;
+        this.puntoInizioDisegnoY = this.posizioneCorrenteMouseY;
+        this.posizioneCorrenteMouseX = pos[0] - $parent.offset().left;
+        this.posizioneCorrenteMouseY = pos[1] - $parent.offset().top;
+        this.arrX.push(this.posizioneCorrenteMouseX);
+        this.arrY.push(this.posizioneCorrenteMouseY);
+    };
+
+    Touch.prototype.draw = function () {
+        console.log('disegna tocco ' + this.id);
         context.beginPath();
-        context.moveTo(puntoInizioDisegnoX, puntoInizioDisegnoY);
-        context.lineTo(posizioneCorrenteMouseX, posizioneCorrenteMouseY);
+        context.moveTo(this.puntoInizioDisegnoX, this.puntoInizioDisegnoY);
+        context.lineTo(this.posizioneCorrenteMouseX, this.posizioneCorrenteMouseY);
         context.strokeStyle = "#FF0000";
         context.lineWidth = larghezzaLinea;
         context.stroke();
         context.closePath();
-    }
+    };
 
+    Touch.prototype.cancel = function () {
+        context.clearRect(0, 0, $canvas.width(), $canvas.height());
+        context.drawImage($img[0], $canvas.data('moveX')+$canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+    };
 
-    function cancella(){
-        context.clearRect(0, 0, canv.width, canv.height);
-        context.drawImage($img[0], 0, 0, canvas.width, canvas.height);
-    }
-
-    $(canv).bind('touchmove touchstart touchend', function (e) {
-        console.log(e.type);
-        var event = e.originalEvent.touches[0];
-        var $parent = $(this).parent();
+    var tracks = []; // array dei tocchi
+    var initX = 0; // reference point to know how to move the image
+    $canvas.on('touchmove touchstart touchend', function (e) {
+        var changedTouches = e.changedTouches;
         switch(e.type) {
+            case 'touchstart':
+                e.preventDefault();
+                initX = 0;
+                for (var i=0; i<changedTouches.length; i++){
+                    tracks[changedTouches[i].identifier] = new Touch(changedTouches[i]);
+                    initX += tracks[changedTouches[i].identifier].posizioneCorrenteMouseX;
+                }
+                initX /= changedTouches.length; // medial point
+                break;
+
             case 'touchmove':
-                if (touch) {
-                    puntoInizioDisegnoX = posizioneCorrenteMouseX;
-                    arrX.push(puntoInizioDisegnoX);
-                    puntoInizioDisegnoY = posizioneCorrenteMouseY;
-                    arrY.push(puntoInizioDisegnoY);
-                    posizioneCorrenteMouseX = event.pageX - $parent.offset().left;
-                    arrX.push(posizioneCorrenteMouseX);
-                    posizioneCorrenteMouseY = event.pageY - $parent.offset().top;
-                    arrY.push(posizioneCorrenteMouseY);
-                    disegna();
+                // max 2 changedTouches
+                if (tracks.length === 1) {
+                    e.preventDefault();
+                    tracks[changedTouches[0].identifier].setPos([changedTouches[0].pageX, changedTouches[0].pageY]);
+                    tracks[changedTouches[0].identifier].draw();
+                } else {
+                    // move the image
+                    var curX = 0;
+                    for (var i=0; i<changedTouches.length; i++){
+                        tracks[changedTouches[i].identifier].setPos([changedTouches[i].pageX, changedTouches[i].pageY]);
+                    }
+                    for (i=0; i<tracks.length; i++){
+                        if (typeof tracks[i]  !== "undefined")
+                            curX += tracks[i].posizioneCorrenteMouseX;
+                        else return; // exit if a touch has been lost
+                    }
+                    curX /= tracks.length; // medial point
+                    if (curX - initX + $canvas.data('oldMoveX') >= canvas.width - canvas.element.data('virtualWidth') && curX - initX + $canvas.data('oldMoveX') <= 0) {
+                        $canvas.data('moveX', curX - initX);
+                        console.log($canvas.data('moveX') + $canvas.data('oldMoveX'));
+                        //console.log("moveX: " + $canvas.data('moveX')); // negative: move left, positive: move right
+                        context.clearRect(0, 0, $canvas.width(), $canvas.height());
+                        context.drawImage($img[0], $canvas.data('moveX') + $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+                    }
                 }
                 break;
-            case 'touchstart':
-                touch = true;
-                posizioneCorrenteMouseX = event.pageX - $parent.offset().left;
-                posizioneCorrenteMouseY = event.pageY - $parent.offset().top;
-                console.log(posizioneCorrenteMouseX);
-                console.log(posizioneCorrenteMouseY);
-                break;
+
             case 'touchend':
-                if (touch) {
+                if (tracks.length === 1) {
+                    context.clearRect(0, 0, $canvas.width(), $canvas.height());
+                    context.drawImage($img[0], $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+                    var arrX = tracks[changedTouches[0].identifier].arrX;
+                    var arrY = tracks[changedTouches[0].identifier].arrY;
                     var minCoordinataX = Math.min.apply(null, arrX);
                     var minCoordinataY = Math.min.apply(null, arrY);
                     var maxCoordinataX = Math.max.apply(null, arrX);
                     var maxCoordinataY = Math.max.apply(null, arrY);
-                    var rectWidth = maxCoordinataX-minCoordinataX;
-                    var rectHeight = maxCoordinataY-minCoordinataY;
-                    cancella();
+                    var rectWidth = maxCoordinataX - minCoordinataX;
+                    var rectHeight = maxCoordinataY - minCoordinataY;
                     context.beginPath();
                     context.lineWidth = 2;
                     context.strokeStyle = "#FFFF00";
                     context.rect(minCoordinataX, minCoordinataY, rectWidth, rectHeight);
                     context.stroke();
                     context.closePath();
-                    arrX = [];
-                    arrY = [];
-                    var detail = {x: minCoordinataX, y: minCoordinataY, width: rectWidth*100/canvas.width, height: rectHeight*100/canvas.height};
+                    var detail = {
+                        x: minCoordinataX,
+                        y: minCoordinataY,
+                        width: rectWidth * 100 / canvas.width,
+                        height: rectHeight * 100 / canvas.height
+                    };
                     drawInputs(detail);
+                } else {
+                    if (e.touches.length === 0) {
+                        $canvas.data('oldMoveX', $canvas.data('moveX') + $canvas.data('oldMoveX'));
+                        console.log("oldMoveX: " + $canvas.data('oldMoveX'));
+                    }
                 }
-                touch = false;
+                for (var i=0; i<changedTouches.length; i++){
+                    delete tracks[changedTouches[i].identifier];
+                }
+                if (e.touches.length === 0) {
+                    tracks = [];
+                }
                 break;
         }
     });
 
+    // show the text boxes and buttons to take the note
     function drawInputs(detail) {
         var f = document.createElement("form");
         f.setAttribute('method',"post");
@@ -351,7 +471,7 @@ $('#noteBtn').on('click', function () {
         document.getElementById('artImage').appendChild(f);
 
     }
-});
+}
 
 canvas.showDetail = function(detail, fromSearch) {
     if (fromSearch === undefined)
@@ -373,14 +493,14 @@ canvas.showDetail = function(detail, fromSearch) {
         zoom = maxP*100/(detW*100/imgW); // ingrandimento in modo che il dettaglio occupi il maxP% in larghezza dello spazio disponibile
         top = (detY*zoom/100)-20;//centra l'immagine in altezza
         left = (detX*zoom/100)-(100-maxP)/2*imgW/100;//centra l'immagine in larghezza
-        canvas.animate(-top, -left, zoom/100*$imgWrap.width(), fromSearch);
+        canvas.animate(-top, -left, zoom/100*$artImage.width(), fromSearch);
     }
     if (imgW < imgH){
         maxP = (imgW-40)*100/imgH;
         zoom = maxP*100/(detH*100/imgH);
         top = (detY*zoom/100)-20;
         left = (detX*zoom/100)-(100-maxP)/2*imgH/100;
-        canvas.animate(-top, -left, zoom/100*$imgWrap.height(), fromSearch, 1);
+        canvas.animate(-top, -left, zoom/100*$artImage.height(), fromSearch, 1);
     }
 
     // update info
