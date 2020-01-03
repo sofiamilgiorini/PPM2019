@@ -1,5 +1,6 @@
 var opera = Opera[operaID];
 var $img;
+var $div;
 
 var canvas = {
     element: $(document.createElement('canvas'))
@@ -310,6 +311,44 @@ $('#noteBtn').on('click', function () {
     });
 
     function drawInputs(detail) {
+        var f = document.createElement("form");
+        f.setAttribute('method',"post");
+        //f.setAttribute('action',"submit.php");
+        var top = detail.y+(detail.height)*canvas.height/100+15;
+        var left = detail.x;
+
+        var i1 = document.createElement("input");
+        i1.setAttribute('class', "text");
+        i1.setAttribute('type',"text");
+        i1.setAttribute('name',"Title");
+        i1.setAttribute('value', "Titolo");
+
+        var i2 = document.createElement("input");
+        i2.setAttribute('class', "text");
+        i2.setAttribute('id', "appunti");
+        i2.setAttribute('type', "text");
+        i2.setAttribute('name', "Notes");
+        i2.setAttribute('value', "Appunti...");
+
+        var s1 = document.createElement("input");
+        s1.setAttribute('class', "botton");
+        s1.setAttribute('id', "back")
+        s1.setAttribute('type',"submit");
+        s1.setAttribute('value',"Annulla");
+
+        var s2 = document.createElement("input");
+        s2.setAttribute('class', "botton");
+        s2.setAttribute('id', "save");
+        s2.setAttribute('type', "submit");
+        s2.setAttribute('value', "Salva");
+
+        f.appendChild(i1);
+        f.appendChild(i2);
+        f.appendChild(s1);
+        f.appendChild(s2);
+
+
+        document.getElementById('artImage').appendChild(f);
 
     }
 });
