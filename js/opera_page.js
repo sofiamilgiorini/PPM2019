@@ -329,7 +329,6 @@ function takeNotes() {
     };
 
     Touch.prototype.draw = function () {
-        console.log('disegna tocco ' + this.id);
         context.beginPath();
         context.moveTo(this.puntoInizioDisegnoX, this.puntoInizioDisegnoY);
         context.lineTo(this.posizioneCorrenteMouseX, this.posizioneCorrenteMouseY);
@@ -337,11 +336,6 @@ function takeNotes() {
         context.lineWidth = larghezzaLinea;
         context.stroke();
         context.closePath();
-    };
-
-    Touch.prototype.cancel = function () {
-        context.clearRect(0, 0, $canvas.width(), $canvas.height());
-        context.drawImage($img[0], $canvas.data('moveX')+$canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
     };
 
     var tracks = []; // array dei tocchi
@@ -377,9 +371,9 @@ function takeNotes() {
                         else return; // exit if a touch has been lost
                     }
                     curX /= tracks.length; // medial point
+                    // don't move if out of bounds
                     if (curX - initX + $canvas.data('oldMoveX') >= canvas.width - canvas.element.data('virtualWidth') && curX - initX + $canvas.data('oldMoveX') <= 0) {
                         $canvas.data('moveX', curX - initX);
-                        console.log($canvas.data('moveX') + $canvas.data('oldMoveX'));
                         //console.log("moveX: " + $canvas.data('moveX')); // negative: move left, positive: move right
                         context.clearRect(0, 0, $canvas.width(), $canvas.height());
                         context.drawImage($img[0], $canvas.data('moveX') + $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
@@ -407,6 +401,7 @@ function takeNotes() {
                     context.closePath();
                     var detail = {
                         x: minCoordinataX,
+                        trueX: minCoordinataX + $canvas.data('moveX'), // detail offset considering the image scroll FIXME: see if it works
                         y: minCoordinataY,
                         width: rectWidth * 100 / canvas.width,
                         height: rectHeight * 100 / canvas.height
@@ -415,7 +410,7 @@ function takeNotes() {
                 } else {
                     if (e.touches.length === 0) {
                         $canvas.data('oldMoveX', $canvas.data('moveX') + $canvas.data('oldMoveX'));
-                        console.log("oldMoveX: " + $canvas.data('oldMoveX'));
+                        //console.log("oldMoveX: " + $canvas.data('oldMoveX'));
                     }
                 }
                 for (var i=0; i<changedTouches.length; i++){
