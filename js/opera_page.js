@@ -151,7 +151,7 @@ $(window).on('load', function () {
     if (opera.img === "") {
         $artImage
             .css({'font-size': '12px',
-                'text-align': 'center'
+                    'text-align': 'center'
                 }
             )
             .text('Immagine non disponibile');
@@ -176,8 +176,8 @@ $(window).on('load', function () {
         $artImage
             .html(canvas.element)
             .after($(document.createElement("span"))
-                    .attr('id', 'canvasInfo')
-                    .text('Clicca l\'immagine per mostrare/nascondere gli appunti')
+                .attr('id', 'canvasInfo')
+                .text('Clicca l\'immagine per mostrare/nascondere gli appunti')
             );
         setBoxHeight();
 
@@ -340,15 +340,24 @@ function takeNotes() {
 
     var tracks = []; // array dei tocchi
     var initX = 0; // reference point to know how to move the image
+    var startId = 0;
     $canvas.on('touchmove touchstart touchend', function (e) {
         var changedTouches = e.changedTouches;
+        if (startId === 0)
+            startId = Math.abs(changedTouches[0].identifier); // iOS fix for negative identifier ???
+
         switch(e.type) {
             case 'touchstart':
                 e.preventDefault();
                 initX = 0;
                 for (var i=0; i<changedTouches.length; i++){
-                    tracks[changedTouches[i].identifier] = new Touch(changedTouches[i]);
-                    initX += tracks[changedTouches[i].identifier].posizioneCorrenteMouseX;
+                    if (changedTouches[i].identifier < 0) {
+                        tracks[startId % Math.abs(changedTouches[i].identifier)] = new Touch(changedTouches[i]);
+                        initX += tracks[startId % Math.abs(changedTouches[i].identifier)].posizioneCorrenteMouseX;
+                    } else {
+                        tracks[changedTouches[i].identifier] = new Touch(changedTouches[i]);
+                        initX += tracks[changedTouches[i].identifier].posizioneCorrenteMouseX;
+                    }
                 }
                 initX /= changedTouches.length; // medial point
                 break;
@@ -357,13 +366,27 @@ function takeNotes() {
                 // max 2 changedTouches
                 if (tracks.length === 1) {
                     e.preventDefault();
-                    tracks[changedTouches[0].identifier].setPos([changedTouches[0].pageX, changedTouches[0].pageY]);
-                    tracks[changedTouches[0].identifier].draw();
+                    if (changedTouches[0].identifier < 0) {
+                        tracks[startId % Math.abs(changedTouches[0].identifier)].setPos([changedTouches[0].pageX, changedTouches[0].pageY]);
+                        tracks[startId % Math.abs(changedTouches[0].identifier)].draw();
+                    } else {
+                        tracks[changedTouches[0].identifier].setPos([changedTouches[0].pageX, changedTouches[0].pageY]);
+                        tracks[changedTouches[0].identifier].draw();
+                    }
                 } else {
+                    var $exist = $('#form');
+                    if ($exist.length) {
+                        $exist.remove();
+                    }
+
                     // move the image
                     var curX = 0;
                     for (var i=0; i<changedTouches.length; i++){
-                        tracks[changedTouches[i].identifier].setPos([changedTouches[i].pageX, changedTouches[i].pageY]);
+                        if (changedTouches[i].identifier < 0) {
+                            tracks[startId % Math.abs(changedTouches[i].identifier)].setPos([changedTouches[i].pageX, changedTouches[i].pageY]);
+                        } else {
+                            tracks[changedTouches[i].identifier].setPos([changedTouches[i].pageX, changedTouches[i].pageY]);
+                        }
                     }
                     for (i=0; i<tracks.length; i++){
                         if (typeof tracks[i]  !== "undefined")
@@ -382,11 +405,18 @@ function takeNotes() {
                 break;
 
             case 'touchend':
+                startId = 0;
                 if (tracks.length === 1) {
                     context.clearRect(0, 0, $canvas.width(), $canvas.height());
                     context.drawImage($img[0], $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
-                    var arrX = tracks[changedTouches[0].identifier].arrX;
-                    var arrY = tracks[changedTouches[0].identifier].arrY;
+                    var arrX, arrY;
+                    if (changedTouches[0].identifier < 0) {
+                        arrX = tracks[startId % Math.abs(changedTouches[0].identifier)].arrX;
+                        arrY = tracks[startId % Math.abs(changedTouches[0].identifier)].arrY;
+                    } else {
+                        arrX = tracks[changedTouches[0].identifier].arrX;
+                        arrY = tracks[changedTouches[0].identifier].arrY;
+                    }
                     var minCoordinataX = Math.min.apply(null, arrX);
                     var minCoordinataY = Math.min.apply(null, arrY);
                     var maxCoordinataX = Math.max.apply(null, arrX);
@@ -414,7 +444,11 @@ function takeNotes() {
                     }
                 }
                 for (var i=0; i<changedTouches.length; i++){
-                    delete tracks[changedTouches[i].identifier];
+                    if (changedTouches[i].identifier < 0) {
+                        delete tracks[startId % Math.abs(changedTouches[i].identifier)];
+                    } else {
+                        delete tracks[changedTouches[i].identifier];
+                    }
                 }
                 if (e.touches.length === 0) {
                     tracks = [];
@@ -425,7 +459,54 @@ function takeNotes() {
 
     // show the text boxes and buttons to take the note
     function drawInputs(detail) {
+        function saveDetail(detail) {
+            console.log('dettagli salvato');
+        }
 
+        var $exist = $('#form');
+        if ($exist.length) {
+            $exist.remove();
+        }
+        if (detail.width !== 0) {
+            var top, left;
+            var $f = $('<div id="form"></div>')
+                .css({
+                    'position': 'absolute',
+                    'top': detail.y + detail.height * canvas.height / 100,
+                    'left': detail.x,
+                    'display': 'block',
+                    'width': $canvas.width * 0.2,
+                    'height': $canvas.height * 0.2,
+                    'background-color': 'rgba(0, 0, 0, 0.5)',
+                    'border-radius': 4
+                })
+                .append('<input type="text" id="noteTitle" placeholder="Titolo">')
+                .append('<textarea id="noteText" rows="10" placeholder="Appunti...">')
+                .append($('<input type="button" id="noteCancBtn" value="Annulla">')
+                    .on('click', function () {
+                        $f.remove();
+                    }))
+                .append($('<input type="button" id="noteSaveBtn" value="Salva">')
+                    .on('click', saveDetail(detail)));
+
+            $artImage.append($f);
+
+            var formHeight = document.getElementById('form').clientHeight;
+            var formWidth = document.getElementById('form').clientWidth;
+            if (canvas.height - (detail.y + (detail.height) * canvas.height / 100) < formHeight) {
+                if (detail.y < formHeight) {
+                    top = canvas.height / 2 - formHeight / 2;
+                } else
+                    top = detail.y - formHeight - 15;
+            } else
+                top = detail.y + (detail.height) * canvas.height / 100 + 15;
+            left = canvas.width / 2 - formWidth / 2;
+
+            $f.css({
+                'top': top,
+                'left': left
+            });
+        }
     }
 }
 
