@@ -462,6 +462,23 @@ function takeNotes() {
     function drawInputs(detail) {
         function saveDetail(detail) {
             console.log(detail);
+            $.ajax({
+                type: 'POST',
+                url: 'http://ppm2019.altervista.org/query_opereDB.php',
+                data: {sender: 'saveDetail', nickname: sessionStorage.getItem("nickname"), opera: opera.nome, dettaglio: JSON.stringify(detail)}
+            }).done(function(data) {
+                var obj = JSON.parse(data);
+                if(obj.alreadyInDB === "true"){
+                    alert("Dettaglio già esistente");
+                }else{
+                    alert("Appunto aggiunto");
+                }
+                $f.remove();
+                context.clearRect(0, 0, $canvas.width(), $canvas.height());
+                context.drawImage($img[0], $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+            }).fail(function(e){
+                console.warn(e);
+            });
         }
 
         // remove an already existing form
