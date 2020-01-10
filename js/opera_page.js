@@ -432,7 +432,7 @@ function takeNotes() {
                     context.closePath();
                     var detail = {
                         x: minCoordinataX,
-                        trueX: minCoordinataX + $canvas.data('moveX'), // detail offset considering the image scroll FIXME: see if it works
+                        trueX: minCoordinataX - $canvas.data('moveX'), // detail offset considering the image scroll FIXME: see if it works
                         y: minCoordinataY,
                         width: rectWidth * 100 / canvas.width,
                         height: rectHeight * 100 / canvas.height
@@ -461,7 +461,7 @@ function takeNotes() {
     // show the text boxes and buttons to take the note
     function drawInputs(detail) {
         function saveDetail(detail) {
-            console.log('dettagli salvato');
+            console.log(detail);
         }
 
         // remove an already existing form
@@ -487,8 +487,8 @@ function takeNotes() {
                     }))
                 .append($('<input type="button" id="noteSaveBtn" value="Salva">')
                     .on('click', function () {
-                        detail.title = $('#noteTitle').text();
-                        detail.text = $('#noteText').text();
+                        detail.title = $('#noteTitle').val();
+                        detail.text = $('#noteText').val();
                         saveDetail(detail);
                     })
                 );

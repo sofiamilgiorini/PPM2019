@@ -4,7 +4,7 @@ $('#register').on('click', function(){
 
     $.ajax({
         type: 'POST',
-        url: 'https://ppm2020app.000webhostapp.com/query_db.php',
+        url: 'http://ppm2019.altervista.org/query_db.php',
         data: {sender: 'registration', nickname: $nickname, password: $password},
         success: function(data){
             alert("Successo");
