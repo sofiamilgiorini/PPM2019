@@ -4,7 +4,7 @@ $('#register').on('click', function(){
 
     $.ajax({
         type: 'POST',
-        url: 'http://ppm2019.altervista.org/query_db.php',
+        url: 'https://ppm2019.altervista.org/query_db.php',
         data: {sender: 'registration', nickname: $nickname, password: $password},
     }).done(function(data){
         alert("Successo");

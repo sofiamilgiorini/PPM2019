@@ -17,7 +17,7 @@ $('#login')
         var $password	= $('#password').val();
         $.ajax({
                 type: 'POST',
-                url: 'http://ppm2019.altervista.org/query_db.php',
+                url: 'https://ppm2019.altervista.org/query_db.php',
                 data: {sender: 'login', nickname: $nickname, password: $password}
         }).done(function (data) {
             var obj = JSON.parse(data);

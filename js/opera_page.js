@@ -464,7 +464,7 @@ function takeNotes() {
             console.log(detail);
             $.ajax({
                 type: 'POST',
-                url: 'http://ppm2019.altervista.org/query_opereDB.php',
+                url: 'https://ppm2019.altervista.org/query_opereDB.php',
                 data: {sender: 'saveDetail', nickname: sessionStorage.getItem("nickname"), opera: opera.nome, dettaglio: JSON.stringify(detail)}
             }).done(function(data) {
                 var obj = JSON.parse(data);
