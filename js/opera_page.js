@@ -374,9 +374,10 @@ function takeNotes() {
                         tracks[changedTouches[0].identifier].draw();
                     }
                 } else {
-                    var $exist = $('#form');
-                    if ($exist.length) {
-                        $exist.remove();
+                    // if the detail form is showing, remove it before sliding
+                    var $exists = $('#form');
+                    if ($exists.length) {
+                        $exists.remove();
                     }
 
                     // move the image
@@ -463,22 +464,20 @@ function takeNotes() {
             console.log('dettagli salvato');
         }
 
-        var $exist = $('#form');
-        if ($exist.length) {
-            $exist.remove();
+        // remove an already existing form
+        var $exists = $('#form');
+        if ($exists.length) {
+            $exists.remove();
         }
-        if (detail.width !== 0) {
+
+        if (detail.width !== 0) { // prevents the form from showing on a single tap
             var top, left;
             var $f = $('<div id="form"></div>')
                 .css({
-                    'position': 'absolute',
                     'top': detail.y + detail.height * canvas.height / 100,
                     'left': detail.x,
-                    'display': 'block',
                     'width': $canvas.width * 0.2,
-                    'height': $canvas.height * 0.2,
-                    'background-color': 'rgba(0, 0, 0, 0.5)',
-                    'border-radius': 4
+                    'height': $canvas.height * 0.2
                 })
                 .append('<input type="text" id="noteTitle" placeholder="Titolo">')
                 .append('<textarea id="noteText" rows="10" placeholder="Appunti...">')
@@ -487,7 +486,12 @@ function takeNotes() {
                         $f.remove();
                     }))
                 .append($('<input type="button" id="noteSaveBtn" value="Salva">')
-                    .on('click', saveDetail(detail)));
+                    .on('click', function () {
+                        detail.title = $('#noteTitle').text();
+                        detail.text = $('#noteText').text();
+                        saveDetail(detail);
+                    })
+                );
 
             $artImage.append($f);
 
