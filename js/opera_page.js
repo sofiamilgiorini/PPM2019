@@ -329,7 +329,6 @@ function takeNotes() {
     };
 
     Touch.prototype.draw = function () {
-        console.log('disegna tocco ' + this.id);
         context.beginPath();
         context.moveTo(this.puntoInizioDisegnoX, this.puntoInizioDisegnoY);
         context.lineTo(this.posizioneCorrenteMouseX, this.posizioneCorrenteMouseY);
@@ -337,11 +336,6 @@ function takeNotes() {
         context.lineWidth = larghezzaLinea;
         context.stroke();
         context.closePath();
-    };
-
-    Touch.prototype.cancel = function () {
-        context.clearRect(0, 0, $canvas.width(), $canvas.height());
-        context.drawImage($img[0], $canvas.data('moveX')+$canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
     };
 
     var tracks = []; // array dei tocchi
@@ -380,9 +374,10 @@ function takeNotes() {
                         tracks[changedTouches[0].identifier].draw();
                     }
                 } else {
-                    var $exist = $('#form');
-                    if ($exist.length) {
-                        $exist.remove();
+                    // if the detail form is showing, remove it before sliding
+                    var $exists = $('#form');
+                    if ($exists.length) {
+                        $exists.remove();
                     }
 
                     // move the image
@@ -400,9 +395,9 @@ function takeNotes() {
                         else return; // exit if a touch has been lost
                     }
                     curX /= tracks.length; // medial point
+                    // don't move if out of bounds
                     if (curX - initX + $canvas.data('oldMoveX') >= canvas.width - canvas.element.data('virtualWidth') && curX - initX + $canvas.data('oldMoveX') <= 0) {
                         $canvas.data('moveX', curX - initX);
-                        console.log($canvas.data('moveX') + $canvas.data('oldMoveX'));
                         //console.log("moveX: " + $canvas.data('moveX')); // negative: move left, positive: move right
                         context.clearRect(0, 0, $canvas.width(), $canvas.height());
                         context.drawImage($img[0], $canvas.data('moveX') + $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
@@ -436,7 +431,8 @@ function takeNotes() {
                     context.stroke();
                     context.closePath();
                     var detail = {
-                        x: minCoordinataX,
+                        relX: minCoordinataX,
+                        x: minCoordinataX - $canvas.data('moveX'), // detail offset considering the image scroll
                         y: minCoordinataY,
                         width: rectWidth * 100 / canvas.width,
                         height: rectHeight * 100 / canvas.height
@@ -445,7 +441,7 @@ function takeNotes() {
                 } else {
                     if (e.touches.length === 0) {
                         $canvas.data('oldMoveX', $canvas.data('moveX') + $canvas.data('oldMoveX'));
-                        console.log("oldMoveX: " + $canvas.data('oldMoveX'));
+                        //console.log("oldMoveX: " + $canvas.data('oldMoveX'));
                     }
                 }
                 for (var i=0; i<changedTouches.length; i++){
@@ -465,25 +461,40 @@ function takeNotes() {
     // show the text boxes and buttons to take the note
     function drawInputs(detail) {
         function saveDetail(detail) {
-            console.log('dettagli salvato');
+            console.log(detail);
+            $.ajax({
+                type: 'POST',
+                url: 'https://ppm2019.altervista.org/query_opereDB.php',
+                data: {sender: 'saveDetail', nickname: sessionStorage.getItem("nickname"), opera: opera.nome, dettaglio: JSON.stringify(detail)}
+            }).done(function(data) {
+                var obj = JSON.parse(data);
+                if(obj.alreadyInDB === "true"){
+                    alert("Dettaglio già esistente");
+                }else{
+                    alert("Appunto aggiunto");
+                }
+                $f.remove();
+                context.clearRect(0, 0, $canvas.width(), $canvas.height());
+                context.drawImage($img[0], $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+            }).fail(function(e){
+                console.warn(e);
+            });
         }
 
-        var $exist = $('#form');
-        if ($exist.length) {
-            $exist.remove();
+        // remove an already existing form
+        var $exists = $('#form');
+        if ($exists.length) {
+            $exists.remove();
         }
-        if (detail.width !== 0) {
+
+        if (detail.width !== 0) { // prevents the form from showing on a single tap
             var top, left;
             var $f = $('<div id="form"></div>')
                 .css({
-                    'position': 'absolute',
                     'top': detail.y + detail.height * canvas.height / 100,
-                    'left': detail.x,
-                    'display': 'block',
+                    'left': detail.relX,
                     'width': $canvas.width * 0.2,
-                    'height': $canvas.height * 0.2,
-                    'background-color': 'rgba(0, 0, 0, 0.5)',
-                    'border-radius': 4
+                    'height': $canvas.height * 0.2
                 })
                 .append('<input type="text" id="noteTitle" placeholder="Titolo">')
                 .append('<textarea id="noteText" rows="10" placeholder="Appunti...">')
@@ -492,7 +503,18 @@ function takeNotes() {
                         $f.remove();
                     }))
                 .append($('<input type="button" id="noteSaveBtn" value="Salva">')
-                    .on('click', saveDetail(detail)));
+                    .on('click', function () {
+                        // modify coords to match non-enlarged image
+                        detail.x = detail.x * canvas.width/canvas.element.data("virtualWidth");
+                        detail.y = detail.y * canvas.element.data("prevHeight")/canvas.height;
+                        // push texts to be saved
+                        detail.nome = $('#noteTitle').val();
+                        detail.descrizione = $('#noteText').val();
+                        console.log(detail);
+                        delete detail.relX;
+                        //saveDetail(detail);
+                    })
+                );
 
             $artImage.append($f);
 
