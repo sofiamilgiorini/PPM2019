@@ -504,10 +504,15 @@ function takeNotes() {
                     }))
                 .append($('<input type="button" id="noteSaveBtn" value="Salva">')
                     .on('click', function () {
+                        // modify coords to match non-enlarged image
+                        detail.x = detail.x * canvas.width/canvas.element.data("virtualWidth");
+                        detail.y = detail.y * canvas.element.data("prevHeight")/canvas.height;
+                        // push texts to be saved
                         detail.nome = $('#noteTitle').val();
                         detail.descrizione = $('#noteText').val();
+                        console.log(detail);
                         delete detail.relX;
-                        saveDetail(detail);
+                        //saveDetail(detail);
                     })
                 );
 
