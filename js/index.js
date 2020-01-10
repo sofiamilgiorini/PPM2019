@@ -64,7 +64,7 @@ $(window).on('load', function () {
     var $topBtn = $('<span id="topBtn"></span>');
     if (user) {
         if (currentPage.includes("opera_page")) {
-            $topBtn.append('Prendi appunti');
+            $topBtn.text('Prendi appunti');
         }
         else {
             $topBtn.append(
@@ -154,7 +154,27 @@ function showTutorial(page) {
 
     // load correct images based on page
     var $topBtn = $('#topBtn');
-    if (page.includes("opera_page")) {
+    if (page === "take_notes") {
+        var $take_notes_1 = $('<img src="./img/tutorial/opera_page_notes/take_notes_1.png">')
+            .css({
+                'top': $topBtn.offset().top + $topBtn.outerHeight()
+            });
+
+        var $take_notes_2 = $('<img src="./img/tutorial/opera_page_notes/take_notes_2.png">')
+            .css({
+                'top': canvas.element.offset().top + canvas.height * 0.7
+            });
+
+        var $take_notes_3 = $('<img src="./img/tutorial/opera_page_notes/take_notes_3.png">')
+            .css({
+                'top': canvas.element.offset().top + canvas.height * 0.2
+            });
+
+        $tutorial.append($take_notes_1, $take_notes_2, $take_notes_3);
+        setOffset($take_notes_1, $topBtn, 0.85);
+        setOffset($take_notes_2, canvas.element);
+        setOffset($take_notes_3, canvas.element, 1);
+    } else if (page.includes("opera_page")) {
         var $opera_page_1 = $('<img src="./img/tutorial/opera_page/opera_page_1.png">')
             .css({
                 'top': $topBtn.offset().top + $topBtn.outerHeight()
@@ -176,7 +196,6 @@ function showTutorial(page) {
         setOffset($opera_page_1, $topBtn);
         setOffset($opera_page_2, $readDescBtn);
         setOffset($opera_page_3, $artImage);
-
     } else {
         var $index1 = $('<img src="./img/tutorial/index/index_1.png">')
             .css({

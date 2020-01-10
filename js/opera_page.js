@@ -194,10 +194,18 @@ $(window).on('load', function () {
                 $t.off().on('click', function () {
                     stopNote(e, $t);
                 });
+
+                showTutorial("take_notes"); // wait for the operaWrap to be filled to get the correct position for tutorials
             }
 
             function stopNote(e, $t) {
                 e.stopImmediatePropagation();
+                // prevent a form to persist when restoring the normal view
+                var $exists = $('#form');
+                if ($exists.length) {
+                    $exists.remove();
+                }
+
                 $t.text('Prendi appunti')
                     .css('background-color', '#3498db');
                 canvas.element.off('touchmove touchstart touchend'); // disable canvas draw interactions
