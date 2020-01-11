@@ -491,7 +491,7 @@ function takeNotes() {
             var top, left;
             var $f = $('<div id="form"></div>')
                 .css({
-                    'top': detail.y + detail.height * canvas.height / 100,
+                    'top': detail.y + detail.height,
                     'left': detail.relX,
                     'width': $canvas.width * 0.2,
                     'height': $canvas.height * 0.2
@@ -522,13 +522,13 @@ function takeNotes() {
 
             var formHeight = document.getElementById('form').clientHeight;
             var formWidth = document.getElementById('form').clientWidth;
-            if (canvas.height - (detail.y + (detail.height) * canvas.height / 100) < formHeight) {
+            if (canvas.height - (detail.y + detail.height) < formHeight) {
                 if (detail.y < formHeight) {
                     top = canvas.height / 2 - formHeight / 2;
                 } else
                     top = detail.y - formHeight - 15;
             } else
-                top = detail.y + (detail.height) * canvas.height / 100 + 15;
+                top = detail.y + detail.height + 15;
             left = canvas.width / 2 - formWidth / 2;
 
             $f.css({
