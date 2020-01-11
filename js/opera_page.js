@@ -434,8 +434,8 @@ function takeNotes() {
                         relX: minCoordinataX,
                         x: minCoordinataX - $canvas.data('moveX'), // detail offset considering the image scroll
                         y: minCoordinataY,
-                        width: rectWidth * 100 / canvas.width,
-                        height: rectHeight * 100 / canvas.height
+                        width: rectWidth,
+                        height: rectHeight
                     };
                     drawInputs(detail);
                 } else {
@@ -505,8 +505,10 @@ function takeNotes() {
                 .append($('<input type="button" id="noteSaveBtn" value="Salva">')
                     .on('click', function () {
                         // modify coords to match non-enlarged image
-                        detail.x = detail.x * canvas.width/canvas.element.data("virtualWidth");
-                        detail.y = detail.y * canvas.element.data("prevHeight")/canvas.height;
+                        detail.x = detail.x/canvas.element.data("virtualWidth")*100;
+                        detail.y = detail.y/canvas.height*100;
+                        detail.width = detail.width/canvas.element.data('virtualWidth')*100;
+                        detail.height = detail.height/canvas.height*100;
                         // push texts to be saved
                         detail.nome = $('#noteTitle').val();
                         detail.descrizione = $('#noteText').val();
