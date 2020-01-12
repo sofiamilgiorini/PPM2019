@@ -91,7 +91,9 @@ var canvas = {
                                                 startNote($(this), e);
                                         });
                                 });
+                                showTutorial("edit_note");
                             });
+                        showTutorial("open_note");
                     })
                 );
             }
@@ -425,6 +427,8 @@ function canvasClick(e) {
             startNote($(this), e);
         });
         canvas.toggleDetails();
+        if (details.length)
+            showTutorial("notes_list");
     }
 }
 $('#filterBox').on('click', '.operaCanvas', function (e) {

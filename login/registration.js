@@ -5,9 +5,8 @@ $('#register').on('click', function(){
     $.ajax({
         type: 'POST',
         url: 'https://ppm2019.altervista.org/query_db.php',
-        data: {sender: 'registration', nickname: $nickname, password: $password},
+        data: {sender: 'registration', nickname: $nickname, password: $password}
     }).done(function(data){
-        alert("Successo");
         var obj = JSON.parse(data);
         console.log(obj.alreadyInDB);
         if(obj.alreadyInDB === "true"){
@@ -16,6 +15,7 @@ $('#register').on('click', function(){
         }else{
             $('#textForProblem').html(" ");
             console.log("il nome ora esiste");
+            alert("Successo");
             window.location = "../index.html";
         }
     }).fail(function(e){

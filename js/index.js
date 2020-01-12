@@ -174,8 +174,32 @@ function showTutorial(page) {
         setOffset($take_notes_1, $topBtn, 0.85);
         setOffset($take_notes_2, canvas.element);
         setOffset($take_notes_3, canvas.element, 1);
-    } else if (page === "open_note") {
+    } else if (page === "notes_list") {
+        var $detailsList = $('#detailsList');
+        var $notes_list_1 = $('<img src="./img/tutorial/notes_list/notes_list_1.png">');
 
+        $tutorial.append($notes_list_1);
+        console.log($detailsList.children('li'));
+        $notes_list_1.on('load', function () {
+            $(this).css('top', $($detailsList.children('li')[0]).offset().top-$notes_list_1.height()*0.9);
+        });
+        setOffset($notes_list_1, $detailsList);
+    } else if (page === "open_note") {
+        var $open_note_1 = $('<img src="./img/tutorial/open_note/open_note_1.png">')
+            .css({
+                'top': $topBtn.offset().top + $topBtn.outerHeight()
+            });
+
+        $tutorial.append($open_note_1);
+        setOffset($open_note_1, $topBtn);
+    } else if (page === "edit_note") {
+        var $edit_note_1 = $('<img src="./img/tutorial/edit_note/edit_note_1.png">')
+            .css({
+                'top': canvas.element.offset().top
+            });
+
+        $tutorial.append($edit_note_1);
+        setOffset($edit_note_1, $topBtn);
     } else if (page.includes("opera_page")) {
         var $opera_page_1 = $('<img src="./img/tutorial/opera_page/opera_page_1.png">')
             .css({
