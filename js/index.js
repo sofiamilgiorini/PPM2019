@@ -64,15 +64,15 @@ $(window).on('load', function () {
     var $topBtn = $('<span id="topBtn"></span>');
     if (user) {
         if (currentPage.includes("opera_page")) {
-            $topBtn.append('Prendi appunti');
+            $topBtn.text('Prendi appunti');
         }
         else {
             $topBtn.append(
                 $('<span id="logout">Esci</span>')
-                .on('click', function () {
-                    sessionStorage.removeItem("nickname");
-                    window.location.reload();
-                })
+                    .on('click', function () {
+                        sessionStorage.removeItem("nickname");
+                        window.location.reload();
+                    })
             );
             $hW.append(
                 $('<div id="greet">Benvenuto ' + user + '!</div>'));
@@ -154,7 +154,53 @@ function showTutorial(page) {
 
     // load correct images based on page
     var $topBtn = $('#topBtn');
-    if (page.includes("opera_page")) {
+    if (page === "take_notes") {
+        var $take_notes_1 = $('<img src="./img/tutorial/opera_page_notes/take_notes_1.png">')
+            .css({
+                'top': $topBtn.offset().top + $topBtn.outerHeight()
+            });
+
+        var $take_notes_2 = $('<img src="./img/tutorial/opera_page_notes/take_notes_2.png">')
+            .css({
+                'top': canvas.element.offset().top + canvas.height * 0.7
+            });
+
+        var $take_notes_3 = $('<img src="./img/tutorial/opera_page_notes/take_notes_3.png">')
+            .css({
+                'top': canvas.element.offset().top + canvas.height * 0.2
+            });
+
+        $tutorial.append($take_notes_1, $take_notes_2, $take_notes_3);
+        setOffset($take_notes_1, $topBtn, 0.85);
+        setOffset($take_notes_2, canvas.element);
+        setOffset($take_notes_3, canvas.element, 1);
+    } else if (page === "notes_list") {
+        var $detailsList = $('#detailsList');
+        var $notes_list_1 = $('<img src="./img/tutorial/notes_list/notes_list_1.png">');
+
+        $tutorial.append($notes_list_1);
+        console.log($detailsList.children('li'));
+        $notes_list_1.on('load', function () {
+            $(this).css('top', $($detailsList.children('li')[0]).offset().top-$notes_list_1.height()*0.9);
+        });
+        setOffset($notes_list_1, $detailsList);
+    } else if (page === "open_note") {
+        var $open_note_1 = $('<img src="./img/tutorial/open_note/open_note_1.png">')
+            .css({
+                'top': $topBtn.offset().top + $topBtn.outerHeight()
+            });
+
+        $tutorial.append($open_note_1);
+        setOffset($open_note_1, $topBtn);
+    } else if (page === "edit_note") {
+        var $edit_note_1 = $('<img src="./img/tutorial/edit_note/edit_note_1.png">')
+            .css({
+                'top': canvas.element.offset().top
+            });
+
+        $tutorial.append($edit_note_1);
+        setOffset($edit_note_1, $topBtn);
+    } else if (page.includes("opera_page")) {
         var $opera_page_1 = $('<img src="./img/tutorial/opera_page/opera_page_1.png">')
             .css({
                 'top': $topBtn.offset().top + $topBtn.outerHeight()
@@ -176,7 +222,6 @@ function showTutorial(page) {
         setOffset($opera_page_1, $topBtn);
         setOffset($opera_page_2, $readDescBtn);
         setOffset($opera_page_3, $artImage);
-
     } else {
         var $index1 = $('<img src="./img/tutorial/index/index_1.png">')
             .css({

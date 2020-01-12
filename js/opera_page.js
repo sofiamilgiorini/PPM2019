@@ -2,10 +2,11 @@ var opera = Opera[operaID];
 var $filterBox;
 var $artImage;
 var $img;
+var nickname = sessionStorage.getItem("nickname");
 
 var canvas = {
     element: $(document.createElement('canvas'))
-        .attr('id', 'operaCanvas')
+        .attr('class', 'operaCanvas') // class because there will be another canvas on top
         .text('Il tuo browser è troppo vecchio!'),
     setElement: function (e) {
         this.element = e;
@@ -24,21 +25,137 @@ var canvas = {
     toggleDetails: function() {
         if(!this.detailsShown) {
             // draw details
-            var det = Opera[operaID].dettagli;
-            if (Opera[operaID].hasOwnProperty("dettagli")) {
-                this.detailsShown = true;
-                this.context.lineWidth = 2;
-                this.context.strokeStyle = "yellow";
-                for (var i in det) {
-                    this.context.strokeRect(det[i].x/100*this.width,det[i].y/100*this.height,det[i].width/100*this.width,det[i].height/100*this.height);
-                }
+            this.detailsShown = true;
+            this.context.lineWidth = 2;
+            this.context.strokeStyle = "yellow";
+            var $detailsList = $('<ul id="detailsList"></ul>');
+            if (details.length === 0)
+                $detailsList.append('<li>Nessun dettaglio presente</li>');
+            for (var i in details) {
+                this.context.strokeRect(details[i].x/100*this.width,details[i].y/100*this.height,details[i].width/100*this.width,details[i].height/100*this.height);
+                $detailsList.append($('<li id="'+details[i]["id"]+'">'+details[i]["nome"]+'</li>')
+                    .on('click', function () { // redraw details but with the clicked one highlighted
+                        var btn = this;
+                        $(this).css('color', 'red');
+                        $(this).parent().children().not($(this)).css('color', 'white');
+                        canvas.context.fillStyle = "rgba(255, 255, 0, 0.5)";
+                        canvas.context.clearRect(0, 0, canvas.width, canvas.height);
+                        canvas.context.drawImage($img[0], 0, 0, canvas.width, canvas.height);
+                        var clickedDetail;
+                        $.each(details, function (index, det) {
+                            canvas.context.strokeRect(det.x/100*canvas.width,det.y/100*canvas.height,det.width/100*canvas.width,det.height/100*canvas.height);
+                            if (btn.id === det["id"]) {
+                                clickedDetail = det;
+                                canvas.context.fillRect(det.x / 100 * canvas.width, det.y / 100 * canvas.height, det.width / 100 * canvas.width, det.height / 100 * canvas.height);
+                            }
+                        });
+                        // change topBtn to open detail
+                        $('#topBtn')
+                            .text("Apri appunto")
+                            .css('background-color', '#a02f2f')
+                            .off().on('click', function () {
+                            canvas.inDetail = true;
+                            canvas.enlarge();
+                            canvas.context.clearRect(0, 0, canvas.element.width(), canvas.element.height());
+                            var detRelX = clickedDetail.relX;
+                            var detX = clickedDetail.x /100 * canvas.element.data('virtualWidth');
+                            var detY = clickedDetail.y /100 * canvas.height;
+                            var detW = clickedDetail.width /100 * canvas.element.data('virtualWidth');
+                            var detH = clickedDetail.height /100 * canvas.height;
+                            var offsetX = -detX-detW/2+canvas.width/2;
+                            if (offsetX < canvas.element.data("maxMoveX")) {
+                                offsetX = canvas.element.data("maxMoveX");
+                            } else if (offsetX > 0) {
+                                offsetX = 0;
+                            }
+                            canvas.context.drawImage($img[0], offsetX, 0, canvas.element.data('virtualWidth'), canvas.height);
+                            canvas.context.lineWidth = 2;
+                            canvas.context.strokeStyle = "yellow";
+                            canvas.context.strokeRect(detRelX, detY, detW, detH);
+
+                            // draw inputs to modify and delete the note
+                            drawInputs(clickedDetail, true);
+
+                            $(this).text('Torna agli appunti')
+                                .off().on('click', function (e) {
+                                canvas.inDetail = false;
+                                // remove an the form
+                                var $exists = $('#form');
+                                if ($exists.length) {
+                                    $exists.remove();
+                                }
+                                canvas.restore();
+                                $(this).text('Prendi appunti')
+                                    .css('background-color', '#3498db')
+                                    .off().on('click', function () {
+                                    startNote($(this), e);
+                                });
+                            });
+                            showTutorial("edit_note");
+                        });
+                        showTutorial("open_note");
+                    })
+                );
             }
+            // write details list
+            var $info = $('#info');
+            $info.children().hide();
+            $info.append(($('<h2 id="listHeader">Lista appunti</h2>')));
+            $info.append($detailsList);
+            // calculate the correct detailsList height to fill the screen
+            var filterBoxMaxHeight = $('#wrapper').height();
+            $filterBox.outerHeight(filterBoxMaxHeight, true);
+            $filterBox.css('max-height', filterBoxMaxHeight+'px');
+            var descriptionHeight = $info.height()-$('#listHeader').height()-parseInt($detailsList.css('margin-top'));
+            $detailsList.css('max-height', descriptionHeight+'px');
+            $filterBox.css('height', '');
         } else {
             this.detailsShown = false;
             // remove details
             this.context.clearRect(0, 0, this.width, this.height);
             this.context.drawImage($img[0], 0, 0, this.width, this.height);
+            $('#listHeader').remove();
+            $('#detailsList').remove();
+            $('#info').children().show();
         }
+    },
+    showDetail: function(detail, fromSearch) {
+        if (fromSearch === undefined)
+            fromSearch = false;
+        var imgW = canvas.width;
+        var imgH = canvas.height;
+        var detX = detail.x/100*imgW;
+        var detY = detail.y/100*imgH;
+        var detW = detail.width/100*imgW;
+        var detH = detail.height/100*imgH;
+        if (detW >= detH)
+            detH = detW;
+        else
+            detW = detH;
+
+        var maxP, zoom = 0, top, left;
+        if (imgW >= imgH){
+            maxP = (imgH-40)*100/imgW;
+            zoom = maxP*100/(detW*100/imgW); // ingrandimento in modo che il dettaglio occupi il maxP% in larghezza dello spazio disponibile
+            top = (detY*zoom/100)-20;//centra l'immagine in altezza
+            left = (detX*zoom/100)-(100-maxP)/2*imgW/100;//centra l'immagine in larghezza
+            canvas.animate(-top, -left, zoom/100*$artImage.width(), fromSearch);
+        }
+        if (imgW < imgH){
+            maxP = (imgW-40)*100/imgH;
+            zoom = maxP*100/(detH*100/imgH);
+            top = (detY*zoom/100)-20;
+            left = (detX*zoom/100)-(100-maxP)/2*imgH/100;
+            canvas.animate(-top, -left, zoom/100*$artImage.height(), fromSearch, 1);
+        }
+
+        // update info
+        $('#canvasInfo').text('Clicca l\'immagine per tornare ai dettagli');
+        $('#title').html($('#title h2').html($('#name').text(detail.nome)));
+        $('#description').text(detail.descrizione);
+        $('#detailsList').remove();
+        $('#info').children().show();
+        setBoxHeight();
     },
     animate: function (t, l, w, fromSearch, h) {
         if (h === undefined)
@@ -181,44 +298,54 @@ $(window).on('load', function () {
             );
         setBoxHeight();
 
-        if (sessionStorage.getItem("nickname")) {
+        if (nickname) {
             showTutorial(currentPage); // wait for the operaWrap to be filled to get the correct position for tutorials
-
-            // bind functions to the topBtn to start and stop taking notes
-            function startNote(e, $t) {
-                e.stopImmediatePropagation();
-                $t.text('Fine')
-                    .css('background-color', '#a02f2f');
-                canvas.enlarge();
-                takeNotes();
-                $t.off().on('click', function () {
-                    stopNote(e, $t);
-                });
-            }
-
-            function stopNote(e, $t) {
-                e.stopImmediatePropagation();
-                $t.text('Prendi appunti')
-                    .css('background-color', '#3498db');
-                canvas.element.off('touchmove touchstart touchend'); // disable canvas draw interactions
-
-                canvas.restore();
-
-                $t.off().on('click', function () {
-                    startNote(e, $t);
-                });
-            }
+            fetchDetails(); // fetch the details immediately supposing the user will want to see them
 
             $('#topBtn').on('click', function (e) {
-                startNote(e, $(this));
+                startNote($(this), e);
             });
         }
 
     });
 });
 
-function setBoxHeight() {
-    // calculate the correct description height to fill the screen
+// functions of the topBtn to start and stop taking notes
+function startNote($t, e) {
+    if (e !== undefined)
+        e.stopImmediatePropagation();
+    $t.text('Fine')
+        .css('background-color', '#a02f2f');
+    canvas.enlarge();
+    takeNotes();
+    $t.off().on('click', function () {
+        stopNote(e, $t);
+    });
+
+    showTutorial("take_notes"); // wait for the operaWrap to be filled to get the correct position for tutorials
+}
+
+function stopNote(e, $t) {
+    e.stopImmediatePropagation();
+    // prevent a form to persist when restoring the normal view
+    var $exists = $('#form');
+    if ($exists.length) {
+        $exists.remove();
+    }
+
+    $t.text('Prendi appunti')
+        .css('background-color', '#3498db');
+    canvas.element.off('touchmove touchstart touchend'); // disable canvas draw interactions
+    $.when(fetchDetails()).always(function () {
+        canvas.restore();
+    });
+
+    $t.off().on('click', function () {
+        startNote($t, e);
+    });
+}
+
+function setBoxHeight() { // calculate the correct description height to fill the screen
     var filterBoxMaxHeight = $('#wrapper').height();
     $filterBox.outerHeight(filterBoxMaxHeight, true);
     $filterBox.css('max-height', filterBoxMaxHeight+'px');
@@ -227,56 +354,101 @@ function setBoxHeight() {
     $filterBox.css('height', '');
 }
 
-/*
-$('#filterBox').on('click', '#operaCanvas', function (e) {
-    e.stopImmediatePropagation();
-
-    // check if a detail has been clicked and draw it
-    if (canvas.detailsShown && !canvas.inDetail) {
-        canvas.toggleDetails();
-        var x = e.offsetX;
-        var y = e.offsetY;
-        var imgW = $(this).width();
-        var imgH = $(this).height();
-        var dets = Opera[operaID].dettagli;
-        for (var i in dets) {
-            var det = dets[i];
-            var detX = det.x / 100 * imgW;
-            var detY = det.y / 100 * imgH;
-            var detW = det.width / 100 * imgW;
-            var detH = det.height / 100 * imgH;
-            // if clicked in a detail box
-            if ((detX <= x && x <= detX + detW) && (detY <= y && y <= detY + detH)) {
-                canvas.showDetail(det);
-                return;
+// fetch the details from the database when loading the opera_page
+var details;
+function fetchDetails () {
+    var dfd = $.Deferred(); // return a promise when done fetching
+    if (nickname) {
+        $.ajax({
+            type: 'POST',
+            url: 'https://ppm2019.altervista.org/query_opereDB.php',
+            data: {sender: 'loadDetail', nickname: nickname, opera: operaID}
+        }).done(function(data) {
+            if(data === "0 results"){
+                console.log("Non ci sono dettagli");
+                details = [];
+            }else{
+                details = JSON.parse(data); // details array
+                details.sort(function(a,b){
+                    return a.nome.toLowerCase().localeCompare(b.nome.toLowerCase());
+                });
+                console.log(details);
             }
-        }
-    } else if (canvas.inDetail) {
-        if (canvas.width >= canvas.height)
-            canvas.animate(0, 0, canvas.width, false);
-        else
-            canvas.animate(0, 0, canvas.height, false, 1);
-        // restore the opera info
-        $('#canvasInfo').text('Clicca l\'immagine per mostrare/nascondere i dettagli');
-        var $info = $('#info');
-        $info.html($info.data('operaInfo'));
-        setBoxHeight();
+            dfd.resolve({loggedIn: true});
+        }).fail(function(e){
+            console.warn("Caricamento dettagli fallito");
+            console.log(e);
+            dfd.reject();
+            alert("Caricamento dettagli fallito");
+        });
     } else {
-        canvas.toggleDetails();
+        dfd.resolve({loggedIn: false});
     }
-});
-*/
+    return dfd.promise();
+}
 
-canvas.enlarge = function () {
-    // enlarge canvas
+function canvasClick(e) {
+    e.stopImmediatePropagation();
+    if (nickname) {
+        if (canvas.detailsShown && !canvas.inDetail) { // check if a detail has been clicked
+            var x = e.offsetX;
+            var y = e.offsetY;
+            var imgW = canvas.width;
+            var imgH = canvas.height;
+            for (var i in details) {
+                var det = details[i];
+                var detX = det.x / 100 * imgW;
+                var detY = det.y / 100 * imgH;
+                var detW = det.width / 100 * imgW;
+                var detH = det.height / 100 * imgH;
+                // if clicked in a detail box
+                if ((detX <= x && x <= detX + detW) && (detY <= y && y <= detY + detH)) {
+                    //canvas.showDetail(det);
+                    $('#'+details[i]["id"]).trigger('click');
+                    return;
+                }
+            }
+        }/*
+        else if (canvas.inDetail) { // if in a detail zoom out and back to details list
+            canvas.toggleDetails();
+            if (canvas.width >= canvas.height)
+                canvas.animate(0, 0, canvas.width, false);
+            else
+                canvas.animate(0, 0, canvas.height, false, 1);
+            // restore the opera info
+            $('#canvasInfo').text('Clicca l\'immagine per mostrare/nascondere i dettagli');
+            canvas.toggleDetails();
+        }*/
+        // draw details boxes
+        $('#topBtn').text('Prendi appunti')
+            .css('background-color', '#3498db')
+            .off().on('click', function (e) {
+            startNote($(this), e);
+        });
+        canvas.toggleDetails();
+        if (details.length)
+            showTutorial("notes_list");
+    }
+}
+$('#filterBox').on('click', '.operaCanvas', function (e) {
+    canvasClick(e);
+});
+
+var detailsWereShown = false;
+canvas.enlarge = function () { // enlarge canvas
+    if (canvas.detailsShown) { // if showing details hide them
+        canvas.toggleDetails();
+        detailsWereShown = true;
+    }
     $searchBox.hide();
     $('#operaWrap').children().not('#artImage').hide();
-    $filterBox.data('css', $filterBox.attr('style')); // save style to restore
-    $filterBox.css({
-        'margin-top': '',
-        'height': '100%',
-        'flex-grow': 1
-    });
+    $filterBox.data('css', $filterBox.attr('style')) // save style to restore
+        .css({
+            'margin-top': '',
+            'height': '100%',
+            'flex-grow': 1
+        })
+        .off();
     $artImage.data('css', $artImage.attr('style'));
     $artImage.css({
         'height': '100%',
@@ -287,16 +459,24 @@ canvas.enlarge = function () {
     canvas.element.data('virtualWidth', canvas.width*canvas.height/canvas.element.data('prevHeight')); // new image width based on height increment
     canvas.context.clearRect(0, 0, canvas.width, canvas.height);
     canvas.context.drawImage($img[0], 0, 0, canvas.element.data('virtualWidth'), canvas.height);
+    canvas.element.data("maxMoveX", -(canvas.element.data('virtualWidth') - canvas.width)); // useful when moving the image
 };
-canvas.restore = function () {
-    // restore normal view
+
+canvas.restore = function () { // restore normal view
     $searchBox.show();
     $('#operaWrap').children().not('#artImage').show();
-    $filterBox.attr('style', $filterBox.data('css'));
+    $filterBox.attr('style', $filterBox.data('css'))
+        .on('click', '.operaCanvas', function (e) {
+            canvasClick(e);
+        });
     $artImage.attr('style', $artImage.data('css'));
     canvas.setHeight(canvas.element.data('prevHeight'));
     canvas.context.clearRect(0, 0, canvas.width, canvas.height);
     canvas.context.drawImage($img[0], 0, 0, canvas.width, canvas.height);
+    if (detailsWereShown) { // restore previous details state
+        canvas.toggleDetails();
+        detailsWereShown = false;
+    }
 };
 
 function takeNotes() {
@@ -305,7 +485,7 @@ function takeNotes() {
     var $parent = $canvas.parent();
     var larghezzaLinea = 4;
     $canvas.data('moveX', 0); // image horizontal offset when swiping with two fingers
-    $canvas.data('oldMoveX', 0);
+    $canvas.data('totMoveX', 0);
 
     function Touch (obj) {
         this.id = obj.identifier;
@@ -396,11 +576,11 @@ function takeNotes() {
                     }
                     curX /= tracks.length; // medial point
                     // don't move if out of bounds
-                    if (curX - initX + $canvas.data('oldMoveX') >= canvas.width - canvas.element.data('virtualWidth') && curX - initX + $canvas.data('oldMoveX') <= 0) {
+                    if (curX - initX + $canvas.data('totMoveX') >= canvas.width - canvas.element.data('virtualWidth') && curX - initX + $canvas.data('totMoveX') <= 0) {
                         $canvas.data('moveX', curX - initX);
                         //console.log("moveX: " + $canvas.data('moveX')); // negative: move left, positive: move right
                         context.clearRect(0, 0, $canvas.width(), $canvas.height());
-                        context.drawImage($img[0], $canvas.data('moveX') + $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+                        context.drawImage($img[0], $canvas.data('moveX') + $canvas.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
                     }
                 }
                 break;
@@ -409,7 +589,7 @@ function takeNotes() {
                 startId = 0;
                 if (tracks.length === 1) {
                     context.clearRect(0, 0, $canvas.width(), $canvas.height());
-                    context.drawImage($img[0], $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+                    context.drawImage($img[0], $canvas.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
                     var arrX, arrY;
                     if (changedTouches[0].identifier < 0) {
                         arrX = tracks[startId % Math.abs(changedTouches[0].identifier)].arrX;
@@ -432,16 +612,21 @@ function takeNotes() {
                     context.closePath();
                     var detail = {
                         relX: minCoordinataX,
-                        x: minCoordinataX - $canvas.data('moveX'), // detail offset considering the image scroll
-                        y: minCoordinataY,
-                        width: rectWidth,
-                        height: rectHeight
+                        x: (minCoordinataX - $canvas.data('totMoveX')) * 100 / canvas.element.data("virtualWidth"), // detail offset considering the image scroll
+                        y: minCoordinataY * 100 / canvas.height,
+                        width: rectWidth * 100 / canvas.element.data("virtualWidth"),
+                        height: rectHeight * 100 / canvas.height
                     };
                     drawInputs(detail);
                 } else {
                     if (e.touches.length === 0) {
-                        $canvas.data('oldMoveX', $canvas.data('moveX') + $canvas.data('oldMoveX'));
-                        //console.log("oldMoveX: " + $canvas.data('oldMoveX'));
+                        var totMoveX = $canvas.data('moveX') + $canvas.data('totMoveX');
+                        if (totMoveX <= 0) {
+                            if (totMoveX >= $canvas.data("maxMoveX")) // maxMoveX <= totMoveX <= 0
+                                $canvas.data('totMoveX', totMoveX);
+                            else
+                                $canvas.data('totMoveX', $canvas.data("maxMoveX"));
+                        }
                     }
                 }
                 for (var i=0; i<changedTouches.length; i++){
@@ -457,125 +642,165 @@ function takeNotes() {
                 break;
         }
     });
-
-    // show the text boxes and buttons to take the note
-    function drawInputs(detail) {
-        function saveDetail(detail) {
-            console.log(detail);
-            $.ajax({
-                type: 'POST',
-                url: 'https://ppm2019.altervista.org/query_opereDB.php',
-                data: {sender: 'saveDetail', nickname: sessionStorage.getItem("nickname"), opera: opera.nome, dettaglio: JSON.stringify(detail)}
-            }).done(function(data) {
-                var obj = JSON.parse(data);
-                if(obj.alreadyInDB === "true"){
-                    alert("Dettaglio già esistente");
-                }else{
-                    alert("Appunto aggiunto");
-                }
-                $f.remove();
-                context.clearRect(0, 0, $canvas.width(), $canvas.height());
-                context.drawImage($img[0], $canvas.data('oldMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
-            }).fail(function(e){
-                console.warn(e);
-            });
-        }
-
-        // remove an already existing form
-        var $exists = $('#form');
-        if ($exists.length) {
-            $exists.remove();
-        }
-
-        if (detail.width !== 0) { // prevents the form from showing on a single tap
-            var top, left;
-            var $f = $('<div id="form"></div>')
-                .css({
-                    'top': detail.y + detail.height,
-                    'left': detail.relX,
-                    'width': $canvas.width * 0.2,
-                    'height': $canvas.height * 0.2
-                })
-                .append('<input type="text" id="noteTitle" placeholder="Titolo">')
-                .append('<textarea id="noteText" rows="10" placeholder="Appunti...">')
-                .append($('<input type="button" id="noteCancBtn" value="Annulla">')
-                    .on('click', function () {
-                        $f.remove();
-                    }))
-                .append($('<input type="button" id="noteSaveBtn" value="Salva">')
-                    .on('click', function () {
-                        // modify coords to match non-enlarged image
-                        detail.x = detail.x/canvas.element.data("virtualWidth")*100;
-                        detail.y = detail.y/canvas.height*100;
-                        detail.width = detail.width/canvas.element.data('virtualWidth')*100;
-                        detail.height = detail.height/canvas.height*100;
-                        // push texts to be saved
-                        detail.nome = $('#noteTitle').val();
-                        detail.descrizione = $('#noteText').val();
-                        console.log(detail);
-                        delete detail.relX;
-                        //saveDetail(detail);
-                    })
-                );
-
-            $artImage.append($f);
-
-            var formHeight = document.getElementById('form').clientHeight;
-            var formWidth = document.getElementById('form').clientWidth;
-            if (canvas.height - (detail.y + detail.height) < formHeight) {
-                if (detail.y < formHeight) {
-                    top = canvas.height / 2 - formHeight / 2;
-                } else
-                    top = detail.y - formHeight - 15;
-            } else
-                top = detail.y + detail.height + 15;
-            left = canvas.width / 2 - formWidth / 2;
-
-            $f.css({
-                'top': top,
-                'left': left
-            });
-        }
-    }
 }
 
-canvas.showDetail = function(detail, fromSearch) {
-    if (fromSearch === undefined)
-        fromSearch = false;
-    var imgW = canvas.width;
-    var imgH = canvas.height;
-    var detX = detail.x/100*imgW;
-    var detY = detail.y/100*imgH;
-    var detW = detail.width/100*imgW;
-    var detH = detail.height/100*imgH;
-    if (detW >= detH)
-        detH = detW;
-    else
-        detW = detH;
+// show the text boxes and buttons to take the note
+function drawInputs(detail, existingDetail) {
+    if (existingDetail === undefined)
+        existingDetail = false;
 
-    var maxP, zoom = 0, top, left;
-    if (imgW >= imgH){
-        maxP = (imgH-40)*100/imgW;
-        zoom = maxP*100/(detW*100/imgW); // ingrandimento in modo che il dettaglio occupi il maxP% in larghezza dello spazio disponibile
-        top = (detY*zoom/100)-20;//centra l'immagine in altezza
-        left = (detX*zoom/100)-(100-maxP)/2*imgW/100;//centra l'immagine in larghezza
-        canvas.animate(-top, -left, zoom/100*$artImage.width(), fromSearch);
-    }
-    if (imgW < imgH){
-        maxP = (imgW-40)*100/imgH;
-        zoom = maxP*100/(detH*100/imgH);
-        top = (detY*zoom/100)-20;
-        left = (detX*zoom/100)-(100-maxP)/2*imgH/100;
-        canvas.animate(-top, -left, zoom/100*$artImage.height(), fromSearch, 1);
+    function saveDetail(detail) {
+        console.log(detail);
+        $.ajax({
+            type: 'POST',
+            url: 'https://ppm2019.altervista.org/query_opereDB.php',
+            data: {sender: 'saveDetail', nickname: nickname, opera: operaID, dettaglio: JSON.stringify(detail)}
+        }).done(function(data) {
+            var obj = JSON.parse(data);
+            if(obj["alreadyInDB"] === "true"){
+                alert("Nome dettaglio già esistente");
+            }else{
+                alert("Appunto salvato");
+            }
+            $f.remove();
+            canvas.context.clearRect(0, 0, canvas.element.width(), canvas.element.height());
+            canvas.context.drawImage($img[0], canvas.element.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+        }).fail(function(e){
+            console.warn(e);
+            alert("Connesione fallita");
+        });
     }
 
-    // update info
-    $('#canvasInfo').text('Clicca l\'immagine per tornare all\'opera completa');
-    $('#title').html($('#title h2').html($('#name').text(detail.nome)));
-    $('#description').text(detail.descrizione);
+    function modifyDetail(detail) {
+        $.ajax({
+            type: 'POST',
+            url: 'https://ppm2019.altervista.org/query_opereDB.php',
+            data: {sender: 'modifyDetail', nickname: nickname, opera: operaID, modifica: JSON.stringify(detail)}
+        }).done(function(data) {
+            var obj = JSON.parse(data);
 
-    setBoxHeight();
-};
+            if(obj["newNameisInDB"] === "true"){
+                alert("Dettaglio "+detail.nome+" già esistente");
+            } else {
+                alert("Appunto modificato");
+            }
+
+            $f.remove();
+            $.when(fetchDetails()).always(function () {
+                canvas.inDetail = false;
+                canvas.restore();
+                $('#topBtn').text('Prendi appunti')
+                    .css('background-color', '#3498db')
+                    .off().on('click', function () {
+                    startNote($(this));
+                });
+            });
+        }).fail(function(e){
+            console.warn(e);
+            alert("Connesione fallita");
+        });
+    }
+
+    function deleteDetail(detail) {
+        $.ajax({
+            type: 'POST',
+            url: 'https://ppm2019.altervista.org/query_opereDB.php',
+            data: {sender: 'deleteDetail', nickname: nickname, opera: operaID, nome: detail.nome}
+        }).done(function(data) {
+            var obj = JSON.parse(data);
+
+            if(obj["deleteFromDB"] === "true"){
+                alert("Dettaglio eliminato correttamente");
+            }else{
+                alert("Problemi nell'eliminare il dettaglio");
+            }
+
+            $f.remove();
+            $.when(fetchDetails()).always(function () {
+                canvas.inDetail = false;
+                canvas.restore();
+                $('#topBtn').text('Prendi appunti')
+                    .css('background-color', '#3498db')
+                    .off().on('click', function () {
+                    startNote($(this));
+                });
+            });
+        }).fail(function(e){
+            console.warn(e);
+            alert("Connesione fallita");
+        });
+    }
+
+    // remove an already existing form
+    var $exists = $('#form');
+    if ($exists.length) {
+        $exists.remove();
+    }
+
+    if (detail.width !== 0) { // prevents the form from showing on a single tap
+        var top, left;
+        var $f = $('<div id="form"></div>')
+            .css({
+                'top': detail.y + detail.height * canvas.height / 100,
+                'left': detail.relX,
+                'width': canvas.width * 0.8
+            });
+        if (!existingDetail) {
+            $f
+                .append('<input type="text" id="noteTitle" placeholder="Titolo">')
+                .append('<textarea id="noteText" rows="10" placeholder="Appunti...">')
+                .append($('<input type="button" id="noteCancBtn" class="noteBtn" value="Annulla">')
+                    .on('click', function () {
+                        $f.remove();
+                        canvas.context.clearRect(0, 0, canvas.element.width(), canvas.element.height());
+                        canvas.context.drawImage($img[0], canvas.element.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+                    }))
+                .append($('<input type="button" id="noteSaveBtn" class="noteBtn" value="Salva">')
+                    .on('click', function () {
+                        detail.nome = $('#noteTitle').val();
+                        detail.descrizione = $('#noteText').val();
+                        saveDetail(detail);
+                    })
+                );
+        } else {
+            $f
+                .append('<input type="text" id="noteTitle" value="'+detail.nome+'">')
+                .append('<textarea id="noteText" rows="10">'+detail.descrizione+'</textarea>>')
+                .append($('<input type="button" id="noteDeleteBtn" class="noteBtn" value="Elimina">')
+                    .on('click', function () {
+                        deleteDetail(detail);
+                    }))
+                .append($('<input type="button" id="noteModifyBtn" class="noteBtn" value="Salva">')
+                    .on('click', function () {
+                        detail.old_nome = detail.nome;
+                        detail.nome = $('#noteTitle').val();
+                        detail.descrizione = $('#noteText').val();
+                        modifyDetail(detail);
+                    })
+                );
+        }
+
+        $artImage.append($f);
+
+        var formHeight = document.getElementById('form').clientHeight;
+        var formWidth = document.getElementById('form').clientWidth;
+        var detY = detail.y * canvas.height / 100;
+        var detH = detail.height * canvas.height / 100;
+        if (canvas.height - (detY + detH) < formHeight) {
+            if (detY < formHeight) {
+                top = canvas.height / 2 - formHeight / 2;
+            } else
+                top = detY - formHeight - 15;
+        } else
+            top = detY + detH + 15;
+        left = canvas.width / 2 - formWidth / 2;
+
+        $f.css({
+            'top': top,
+            'left': left
+        });
+    }
+}
 
 // TODO: this will be removed, the  searchBox will be only used to search notes titles
 // highlight searched text or special artwork information or show detail
