@@ -744,8 +744,7 @@ function drawInputs(detail, existingDetail) {
             .css({
                 'top': detail.y + detail.height * canvas.height / 100,
                 'left': detail.relX,
-                'width': canvas.element.width * 0.2,
-                'height': canvas.element.height * 0.2
+                'width': canvas.width * 0.8
             });
         if (!existingDetail) {
             $f
