@@ -29,7 +29,7 @@ for(var i=0; i<voices.length; i++) {
 if(defaultVoice === '')
 	defaultVoice = voices[0];
 
-utter.rate = 1.25;
+utter.rate = 1;
 utter.pitch = 1;
 utter.voice = defaultVoice;
 })();

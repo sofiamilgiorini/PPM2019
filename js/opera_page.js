@@ -876,7 +876,8 @@ $('#readDescBtn').on('click', function (e) {
             .text("Leggi descrizione")
             .removeAttr("data-playing");
     } else {
-        speak($('#description').text());
+        var text = $('#description').text().split(/[,;.]/);
+        speak(text);
         $(this)
             .html("&nbsp;&nbsp;&nbsp;Ferma lettura&nbsp;&nbsp;&nbsp;")
             .attr("data-playing", "true");
