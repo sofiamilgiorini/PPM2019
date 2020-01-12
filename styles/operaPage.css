@@ -110,12 +110,21 @@ input[type=submit], input[type=button] {
     cursor: pointer;
 }
 
-#description {
+#description, #detailsList {
     flex: 1 1 auto;
     max-height: 0; /* will be calculated dynamically */
     margin-top: 20px;
     overflow: auto;
     text-align: justify;
+}
+
+#detailsList {
+    margin-top: 0;
+    font-size: 1.5em;
+}
+
+#detailsList li {
+    margin-top: 10px;
 }
 
 .loader {
