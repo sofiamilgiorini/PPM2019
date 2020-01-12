@@ -29,9 +29,11 @@ var canvas = {
             this.context.lineWidth = 2;
             this.context.strokeStyle = "yellow";
             var $detailsList = $('<ul id="detailsList"></ul>');
+            if (details.length === 0)
+                $detailsList.append('<li>Nessun dettaglio presente</li>');
             for (var i in details) {
                 this.context.strokeRect(details[i].x/100*this.width,details[i].y/100*this.height,details[i].width/100*this.width,details[i].height/100*this.height);
-                $detailsList.append($('<li id="'+details[i]["nome"].replace(" ", "_")+'">'+details[i]["nome"]+'</li>')
+                $detailsList.append($('<li id="'+details[i]["id"]+'">'+details[i]["nome"]+'</li>')
                     .on('click', function () { // redraw details but with the clicked one highlighted
                         var btn = this;
                         $(this).css('color', 'red');
@@ -42,7 +44,7 @@ var canvas = {
                         var clickedDetail;
                         $.each(details, function (index, det) {
                             canvas.context.strokeRect(det.x/100*canvas.width,det.y/100*canvas.height,det.width/100*canvas.width,det.height/100*canvas.height);
-                            if (btn.id === det["nome"].replace(" ", "_")) {
+                            if (btn.id === det["id"]) {
                                 clickedDetail = det;
                                 canvas.context.fillRect(det.x / 100 * canvas.width, det.y / 100 * canvas.height, det.width / 100 * canvas.width, det.height / 100 * canvas.height);
                             }
@@ -52,6 +54,7 @@ var canvas = {
                             .text("Apri appunto")
                             .css('background-color', '#a02f2f')
                             .off().on('click', function () {
+                                canvas.inDetail = true;
                                 canvas.enlarge();
                                 canvas.context.clearRect(0, 0, canvas.element.width(), canvas.element.height());
                                 var detRelX = clickedDetail.relX;
@@ -70,13 +73,22 @@ var canvas = {
                                 canvas.context.strokeStyle = "yellow";
                                 canvas.context.strokeRect(detRelX, detY, detW, detH);
 
+                                // draw inputs to modify and delete the note
+                                drawInputs(clickedDetail, true);
+
                                 $(this).text('Torna agli appunti')
                                     .off().on('click', function (e) {
+                                        canvas.inDetail = false;
+                                        // remove an the form
+                                        var $exists = $('#form');
+                                        if ($exists.length) {
+                                            $exists.remove();
+                                        }
                                         canvas.restore();
                                         $(this).text('Prendi appunti')
                                             .css('background-color', '#3498db')
                                             .off().on('click', function () {
-                                                startNote(e, $(this));
+                                                startNote($(this), e);
                                         });
                                 });
                             });
@@ -286,16 +298,10 @@ $(window).on('load', function () {
 
         if (nickname) {
             showTutorial(currentPage); // wait for the operaWrap to be filled to get the correct position for tutorials
-            $.when(fetchDetails()) // fetch the details immediately supposing the user will want to see them
-                .done(function () {
-                    console.log(details);
-                })
-                .fail(function () {
-                    alert("Caricamento dettagli fallito");
-                });
+            fetchDetails(); // fetch the details immediately supposing the user will want to see them
 
             $('#topBtn').on('click', function (e) {
-                startNote(e, $(this));
+                startNote($(this), e);
             });
         }
 
@@ -303,8 +309,9 @@ $(window).on('load', function () {
 });
 
 // functions of the topBtn to start and stop taking notes
-function startNote(e, $t) {
-    e.stopImmediatePropagation();
+function startNote($t, e) {
+    if (e !== undefined)
+        e.stopImmediatePropagation();
     $t.text('Fine')
         .css('background-color', '#a02f2f');
     canvas.enlarge();
@@ -327,19 +334,12 @@ function stopNote(e, $t) {
     $t.text('Prendi appunti')
         .css('background-color', '#3498db');
     canvas.element.off('touchmove touchstart touchend'); // disable canvas draw interactions
-    $.when(fetchDetails())
-        .done(function () {
-            console.log(details);
-        })
-        .fail(function () {
-            alert("Caricamento dettagli fallito");
-        })
-        .always(function () {
+    $.when(fetchDetails()).always(function () {
             canvas.restore();
         });
 
     $t.off().on('click', function () {
-        startNote(e, $t);
+        startNote($t, e);
     });
 }
 
@@ -367,12 +367,17 @@ function fetchDetails () {
                     details = [];
                 }else{
                     details = JSON.parse(data); // details array
+                    details.sort(function(a,b){
+                        return a.nome.toLowerCase().localeCompare(b.nome.toLowerCase());
+                    });
+                    console.log(details);
                 }
                 dfd.resolve({loggedIn: true});
             }).fail(function(e){
                 console.warn("Caricamento dettagli fallito");
                 console.log(e);
                 dfd.reject();
+                alert("Caricamento dettagli fallito");
             });
     } else {
         dfd.resolve({loggedIn: false});
@@ -383,13 +388,11 @@ function fetchDetails () {
 function canvasClick(e) {
     e.stopImmediatePropagation();
     if (nickname) {
-        /*
-        if (canvas.detailsShown && !canvas.inDetail) { // check if a detail has been clicked and draw it
-            canvas.toggleDetails();
+        if (canvas.detailsShown && !canvas.inDetail) { // check if a detail has been clicked
             var x = e.offsetX;
             var y = e.offsetY;
-            var imgW = $(this).width();
-            var imgH = $(this).height();
+            var imgW = canvas.width;
+            var imgH = canvas.height;
             for (var i in details) {
                 var det = details[i];
                 var detX = det.x / 100 * imgW;
@@ -398,13 +401,13 @@ function canvasClick(e) {
                 var detH = det.height / 100 * imgH;
                 // if clicked in a detail box
                 if ((detX <= x && x <= detX + detW) && (detY <= y && y <= detY + detH)) {
-                    canvas.showDetail(det);
+                    //canvas.showDetail(det);
+                    $('#'+details[i]["id"]).trigger('click');
                     return;
                 }
             }
-        }
-        */
-        if (canvas.inDetail) { // if in a detail zoom out and back to details list
+        }/*
+        else if (canvas.inDetail) { // if in a detail zoom out and back to details list
             canvas.toggleDetails();
             if (canvas.width >= canvas.height)
                 canvas.animate(0, 0, canvas.width, false);
@@ -414,15 +417,14 @@ function canvasClick(e) {
             $('#canvasInfo').text('Clicca l\'immagine per mostrare/nascondere i dettagli');
             canvas.toggleDetails();
 
-        } else { // draw details boxes
-            $('#topBtn').text('Prendi appunti')
-                .css('background-color', '#3498db')
-                .off().on('click', function (e) {
-                startNote(e, $(this));
-            });
-            if (nickname)
-                canvas.toggleDetails();
-        }
+        }*/
+        // draw details boxes
+        $('#topBtn').text('Prendi appunti')
+            .css('background-color', '#3498db')
+            .off().on('click', function (e) {
+            startNote($(this), e);
+        });
+        canvas.toggleDetails();
     }
 }
 $('#filterBox').on('click', '.operaCanvas', function (e) {
@@ -637,81 +639,164 @@ function takeNotes() {
                 break;
         }
     });
+}
 
-    // show the text boxes and buttons to take the note
-    function drawInputs(detail) {
-        function saveDetail(detail) {
-            console.log(detail);
-            $.ajax({
-                type: 'POST',
-                url: 'https://ppm2019.altervista.org/query_opereDB.php',
-                data: {sender: 'saveDetail', nickname: nickname, opera: operaID, dettaglio: JSON.stringify(detail)}
-            }).done(function(data) {
-                var obj = JSON.parse(data);
-                if(obj["alreadyInDB"] === "true"){
-                    alert("Nome dettaglio già esistente");
-                }else{
-                    alert("Appunto salvato");
-                }
-                $f.remove();
-                context.clearRect(0, 0, $canvas.width(), $canvas.height());
-                context.drawImage($img[0], $canvas.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
-            }).fail(function(e){
-                console.warn(e);
+// show the text boxes and buttons to take the note
+function drawInputs(detail, existingDetail) {
+    if (existingDetail === undefined)
+        existingDetail = false;
+
+    function saveDetail(detail) {
+        console.log(detail);
+        $.ajax({
+            type: 'POST',
+            url: 'https://ppm2019.altervista.org/query_opereDB.php',
+            data: {sender: 'saveDetail', nickname: nickname, opera: operaID, dettaglio: JSON.stringify(detail)}
+        }).done(function(data) {
+            var obj = JSON.parse(data);
+            if(obj["alreadyInDB"] === "true"){
+                alert("Nome dettaglio già esistente");
+            }else{
+                alert("Appunto salvato");
+            }
+            $f.remove();
+            canvas.context.clearRect(0, 0, canvas.element.width(), canvas.element.height());
+            canvas.context.drawImage($img[0], canvas.element.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+        }).fail(function(e){
+            console.warn(e);
+            alert("Connesione fallita");
+        });
+    }
+
+    function modifyDetail(detail) {
+        $.ajax({
+            type: 'POST',
+            url: 'https://ppm2019.altervista.org/query_opereDB.php',
+            data: {sender: 'modifyDetail', nickname: nickname, opera: operaID, modifica: JSON.stringify(detail)}
+        }).done(function(data) {
+            var obj = JSON.parse(data);
+
+            if(obj["newNameisInDB"] === "true"){
+                alert("Dettaglio "+detail.nome+" già esistente");
+            } else {
+                alert("Appunto modificato");
+            }
+
+            $f.remove();
+            $.when(fetchDetails()).always(function () {
+                canvas.inDetail = false;
+                canvas.restore();
+                $('#topBtn').text('Prendi appunti')
+                    .css('background-color', '#3498db')
+                    .off().on('click', function () {
+                    startNote($(this));
+                });
             });
-        }
+        }).fail(function(e){
+            console.warn(e);
+            alert("Connesione fallita");
+        });
+    }
 
-        // remove an already existing form
-        var $exists = $('#form');
-        if ($exists.length) {
-            $exists.remove();
-        }
+    function deleteDetail(detail) {
+        $.ajax({
+            type: 'POST',
+            url: 'https://ppm2019.altervista.org/query_opereDB.php',
+            data: {sender: 'deleteDetail', nickname: nickname, opera: operaID, nome: detail.nome}
+        }).done(function(data) {
+            var obj = JSON.parse(data);
 
-        if (detail.width !== 0) { // prevents the form from showing on a single tap
-            var top, left;
-            var $f = $('<div id="form"></div>')
-                .css({
-                    'top': detail.y + detail.height * canvas.height / 100,
-                    'left': detail.relX,
-                    'width': $canvas.width * 0.2,
-                    'height': $canvas.height * 0.2
-                })
+            if(obj["deleteFromDB"] === "true"){
+                alert("Dettaglio eliminato correttamente");
+            }else{
+                alert("Problemi nell'eliminare il dettaglio");
+            }
+
+            $f.remove();
+            $.when(fetchDetails()).always(function () {
+                canvas.inDetail = false;
+                canvas.restore();
+                $('#topBtn').text('Prendi appunti')
+                    .css('background-color', '#3498db')
+                    .off().on('click', function () {
+                    startNote($(this));
+                });
+            });
+        }).fail(function(e){
+            console.warn(e);
+            alert("Connesione fallita");
+        });
+    }
+
+    // remove an already existing form
+    var $exists = $('#form');
+    if ($exists.length) {
+        $exists.remove();
+    }
+
+    if (detail.width !== 0) { // prevents the form from showing on a single tap
+        var top, left;
+        var $f = $('<div id="form"></div>')
+            .css({
+                'top': detail.y + detail.height * canvas.height / 100,
+                'left': detail.relX,
+                'width': canvas.element.width * 0.2,
+                'height': canvas.element.height * 0.2
+            });
+        if (!existingDetail) {
+            $f
                 .append('<input type="text" id="noteTitle" placeholder="Titolo">')
                 .append('<textarea id="noteText" rows="10" placeholder="Appunti...">')
-                .append($('<input type="button" id="noteCancBtn" value="Annulla">')
-                    .on('click', function () {
-                        $f.remove();
-                        context.clearRect(0, 0, $canvas.width(), $canvas.height());
-                        context.drawImage($img[0], $canvas.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
-                    }))
-                .append($('<input type="button" id="noteSaveBtn" value="Salva">')
+                .append($('<input type="button" id="noteCancBtn" class="noteBtn" value="Annulla">')
+                .on('click', function () {
+                    $f.remove();
+                    canvas.context.clearRect(0, 0, canvas.element.width(), canvas.element.height());
+                    canvas.context.drawImage($img[0], canvas.element.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+                }))
+                .append($('<input type="button" id="noteSaveBtn" class="noteBtn" value="Salva">')
                     .on('click', function () {
                         detail.nome = $('#noteTitle').val();
                         detail.descrizione = $('#noteText').val();
                         saveDetail(detail);
                     })
                 );
-
-            $artImage.append($f);
-
-            var formHeight = document.getElementById('form').clientHeight;
-            var formWidth = document.getElementById('form').clientWidth;
-            var detY = detail.y * canvas.height / 100;
-            var detH = detail.height * canvas.height / 100;
-            if (canvas.height - (detY + detH) < formHeight) {
-                if (detY < formHeight) {
-                    top = canvas.height / 2 - formHeight / 2;
-                } else
-                    top = detY - formHeight - 15;
-            } else
-                top = detY + detH + 15;
-            left = canvas.width / 2 - formWidth / 2;
-
-            $f.css({
-                'top': top,
-                'left': left
-            });
+        } else {
+            $f
+                .append('<input type="text" id="noteTitle" value="'+detail.nome+'">')
+                .append('<textarea id="noteText" rows="10">'+detail.descrizione+'</textarea>>')
+                .append($('<input type="button" id="noteDeleteBtn" class="noteBtn" value="Elimina">')
+                    .on('click', function () {
+                        deleteDetail(detail);
+                    }))
+                .append($('<input type="button" id="noteModifyBtn" class="noteBtn" value="Salva">')
+                    .on('click', function () {
+                        detail.old_nome = detail.nome;
+                        detail.nome = $('#noteTitle').val();
+                        detail.descrizione = $('#noteText').val();
+                        modifyDetail(detail);
+                    })
+                );
         }
+
+        $artImage.append($f);
+
+        var formHeight = document.getElementById('form').clientHeight;
+        var formWidth = document.getElementById('form').clientWidth;
+        var detY = detail.y * canvas.height / 100;
+        var detH = detail.height * canvas.height / 100;
+        if (canvas.height - (detY + detH) < formHeight) {
+            if (detY < formHeight) {
+                top = canvas.height / 2 - formHeight / 2;
+            } else
+                top = detY - formHeight - 15;
+        } else
+            top = detY + detH + 15;
+        left = canvas.width / 2 - formWidth / 2;
+
+        $f.css({
+            'top': top,
+            'left': left
+        });
     }
 }
 

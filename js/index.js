@@ -174,6 +174,8 @@ function showTutorial(page) {
         setOffset($take_notes_1, $topBtn, 0.85);
         setOffset($take_notes_2, canvas.element);
         setOffset($take_notes_3, canvas.element, 1);
+    } else if (page === "open_note") {
+
     } else if (page.includes("opera_page")) {
         var $opera_page_1 = $('<img src="./img/tutorial/opera_page/opera_page_1.png">')
             .css({
