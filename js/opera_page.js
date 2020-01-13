@@ -525,6 +525,9 @@ function takeNotes() {
     var initX = 0; // reference point to know how to move the image
     var startId = 0;
     $canvas.on('touchmove touchstart touchend', function (e) {
+        touchRec(e);
+    });
+    function touchRec(e) {
         var changedTouches = e.changedTouches;
         if (startId === 0)
             startId = Math.abs(changedTouches[0].identifier); // iOS fix for negative identifier ???
@@ -620,7 +623,7 @@ function takeNotes() {
                         width: rectWidth * 100 / canvas.element.data("virtualWidth"),
                         height: rectHeight * 100 / canvas.height
                     };
-                    drawInputs(detail);
+                    drawInputs(detail, false, touchRec); // pass the function to be reattached
                 } else {
                     if (e.touches.length === 0) {
                         var totMoveX = $canvas.data('moveX') + $canvas.data('totMoveX');
@@ -644,11 +647,11 @@ function takeNotes() {
                 }
                 break;
         }
-    });
+    }
 }
 
 // show the text boxes and buttons to take the note
-function drawInputs(detail, existingDetail) {
+function drawInputs(detail, existingDetail, func) {
     if (existingDetail === undefined)
         existingDetail = false;
 
@@ -749,6 +752,7 @@ function drawInputs(detail, existingDetail) {
                 'width': canvas.width * 0.8
             });
         if (!existingDetail) {
+            canvas.element.off('touchmove touchstart touchend'); // disable the handler
             $f
                 .append('<input type="text" id="noteTitle" placeholder="Titolo">')
                 .append('<textarea id="noteText" rows="10" placeholder="Appunti...">')
@@ -757,12 +761,18 @@ function drawInputs(detail, existingDetail) {
                     $f.remove();
                     canvas.context.clearRect(0, 0, canvas.element.width(), canvas.element.height());
                     canvas.context.drawImage($img[0], canvas.element.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
+                    canvas.element.on('touchmove touchstart touchend', function (e) {
+                        func(e);
+                    });
                 }))
                 .append($('<input type="button" id="noteSaveBtn" class="noteBtn" value="Salva">')
                     .on('click', function () {
                         detail.nome = $('#noteTitle').val();
                         detail.descrizione = $('#noteText').val();
                         saveDetail(detail);
+                        canvas.element.on('touchmove touchstart touchend', function (e) {
+                            func(e);
+                        });
                     })
                 );
         } else {
