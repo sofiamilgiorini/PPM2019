@@ -761,7 +761,7 @@ function drawInputs(detail, existingDetail, func) {
                     $f.remove();
                     canvas.context.clearRect(0, 0, canvas.element.width(), canvas.element.height());
                     canvas.context.drawImage($img[0], canvas.element.data('totMoveX'), 0, canvas.element.data('virtualWidth'), canvas.height);
-                    canvas.element.on('touchmove touchstart touchend', function (e) {
+                    canvas.element.on('touchmove touchstart touchend', function (e) { // reattach the handler
                         func(e);
                     });
                 }))
