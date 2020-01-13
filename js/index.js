@@ -228,17 +228,21 @@ function showTutorial(page) {
                 'top': $searchBox.offset().top + $searchBox.outerHeight(),
                 'left': 10
             });
-        var $index2 = $('<img src="./img/tutorial/index/index_2.png">')
-            .css({
-                'top': $speakBtn.offset().top + $speakBtn.outerHeight()
-            });
+        if ($speakBtn.length) {
+            var $index2 = $('<img src="./img/tutorial/index/index_2.png">')
+                .css({
+                    'top': $speakBtn.offset().top + $speakBtn.outerHeight()
+                });
+        }
         var $index3 = $('<img src="./img/tutorial/index/index_3.png">')
             .css({
                 'top': $topBtn.offset().top + $topBtn.outerHeight() / 2
             });
 
         $tutorial.append($index1, $index2, $index3);
-        setOffset($index2, $speakBtn);
+        if ($speakBtn.length) {
+            setOffset($index2, $speakBtn);
+        }
         $index3.css('left', $topBtn.offset().left - $index3.width())
     }
 

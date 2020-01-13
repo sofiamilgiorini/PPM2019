@@ -867,7 +867,7 @@ String.prototype.regexIndexOf = function(regex, startpos) {
     return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
 };
 
-// FIXME: this only reads for a limited time (about 15 seconds) (so it depends on the speech speed (rate)), a longer text needs to be chunked (it's best to split on full stops and commas)
+// FIXME (Chrome pc only): this only reads for a limited time (about 15 seconds) (so it depends on the speech speed (rate)), a longer text needs to be chunked (it's best to split on full stops and commas)
 $('#readDescBtn').on('click', function (e) {
     e.stopImmediatePropagation();
     if ($(this).attr("data-playing")) {
