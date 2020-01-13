@@ -882,3 +882,7 @@ $('#readDescBtn').on('click', function (e) {
             .attr("data-playing", "true");
     }
 });
+
+$(window).on('unload', function () {
+    synth.cancel();
+});

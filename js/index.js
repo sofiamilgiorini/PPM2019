@@ -179,7 +179,6 @@ function showTutorial(page) {
         var $notes_list_1 = $('<img src="./img/tutorial/notes_list/notes_list_1.png">');
 
         $tutorial.append($notes_list_1);
-        console.log($detailsList.children('li'));
         $notes_list_1.on('load', function () {
             $(this).css('top', $($detailsList.children('li')[0]).offset().top-$notes_list_1.height()*0.9);
         });
