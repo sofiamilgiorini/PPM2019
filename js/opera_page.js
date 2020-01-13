@@ -62,16 +62,22 @@ var canvas = {
                                 var detY = clickedDetail.y /100 * canvas.height;
                                 var detW = clickedDetail.width /100 * canvas.element.data('virtualWidth');
                                 var detH = clickedDetail.height /100 * canvas.height;
-                                var offsetX = -detX-detW/2+canvas.width/2;
-                                if (offsetX < canvas.element.data("maxMoveX")) {
+                                var offsetX = -detX+(-detW/2+canvas.width)/2;
+                                var onEdge = true;
+                                // either center the image and the detail box or keep it off center if reached the image edge
+                                if (offsetX < canvas.element.data("maxMoveX"))
                                     offsetX = canvas.element.data("maxMoveX");
-                                } else if (offsetX > 0) {
+                                else if (offsetX > 0)
                                     offsetX = 0;
-                                }
+                                else
+                                    onEdge = false;
                                 canvas.context.drawImage($img[0], offsetX, 0, canvas.element.data('virtualWidth'), canvas.height);
                                 canvas.context.lineWidth = 2;
                                 canvas.context.strokeStyle = "yellow";
-                                canvas.context.strokeRect(detRelX, detY, detW, detH);
+                                if (onEdge)
+                                    canvas.context.strokeRect(detRelX, detY, detW, detH);
+                                else
+                                    canvas.context.strokeRect((-detW/2 + canvas.width)/2, detY, detW, detH);
 
                                 // draw inputs to modify and delete the note
                                 drawInputs(clickedDetail, true);
