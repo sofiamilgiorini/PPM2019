@@ -221,6 +221,8 @@ var canvas = {
 
 $(window).on('load', function () {
     $filterBox = $('#filterBox');
+    $searchBox.hide(); // no use for searchBox as of now
+    $filterBox.css('margin-top', '');
     $artImage = $('#artImage');
     $img = $(document.createElement("img"))
         .attr({
@@ -441,7 +443,7 @@ canvas.enlarge = function () { // enlarge canvas
         canvas.toggleDetails();
         detailsWereShown = true;
     }
-    $searchBox.hide();
+    //$searchBox.hide();
     $('#operaWrap').children().not('#artImage').hide();
     $filterBox.data('css', $filterBox.attr('style')) // save style to restore
         .css({
@@ -464,7 +466,7 @@ canvas.enlarge = function () { // enlarge canvas
 };
 
 canvas.restore = function () { // restore normal view
-    $searchBox.show();
+    //$searchBox.show();
     $('#operaWrap').children().not('#artImage').show();
     $filterBox.attr('style', $filterBox.data('css'))
         .on('click', '.operaCanvas', function (e) {
