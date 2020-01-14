@@ -57,7 +57,38 @@ $(window).on('load', function () {
     // cycle every 5s
     setInterval('cycleImages()', 5000); // timeout must be more than the fadeOut duration
 
-    if (currentPage === "/site/progetto/") // because in opera_page we need to wait for the images to be loaded
+
+    // check if user is logged in
+    var $hW = $('#headerWrapper');
+    var user = sessionStorage.getItem("nickname");
+    var $topBtn = $('<span id="topBtn"></span>');
+    if (user) {
+        if (currentPage.includes("opera_page")) {
+            $topBtn.text('Prendi appunti');
+        }
+        else {
+            $topBtn.append(
+                $('<span id="logout">Esci</span>')
+                .on('click', function () {
+                    sessionStorage.removeItem("nickname");
+                    window.location.reload();
+                })
+            );
+            $hW.append(
+                $('<div id="greet">Benvenuto ' + user + '!</div>'));
+        }
+    }
+    else {
+        $topBtn.append(
+            $('<a href="login/login.html">Accedi</a>')
+                .on('click', function () {
+                    sessionStorage.setItem("loggedFrom", window.location) // save page to go back there after the login
+                })
+        );
+    }
+    $hW.append($topBtn);
+
+    if (!currentPage.includes("opera_page")) // because in opera_page we need to wait for the images to be loaded
         showTutorial(currentPage);
 });
 
@@ -110,23 +141,68 @@ function showTutorial(page) {
 
     $tutorial.append($tutBtn);
     $('body')
-        .prepend([$tutorialBG, $tutorial]);
+        .prepend($tutorialBG, $tutorial);
 
     function setOffset(toSet, setTo, backoff) {
         backoff = (typeof backoff !== 'undefined') ?  backoff : 0.7;
         var windowWidth = $(window).width();
-        var left = (setTo.offset().left + setTo.offset().left+setTo.outerWidth()) / 2 - toSet.width()*backoff; // find center of setTo element and back off to center the arrow (arrow tip is at 0.7 of the image width)
+        var left = (setTo.offset().left + setTo.offset().left + setTo.outerWidth()) / 2 - toSet.width()*backoff; // find center of setTo element and back off to center the arrow (arrow tip is at 0.7 of the image width)
         if (left + toSet.width() <= windowWidth) // check if the image would be offscreen
             toSet.css('left', left);
         else toSet.css('right', 10); // if offscreen set a distance from right margin of 10 instead
     }
 
     // load correct images based on page
-    if (page.includes("opera_page")) {
-        var $noteBtn = $('#noteBtn');
+    var $topBtn = $('#topBtn');
+    if (page === "take_notes") {
+        var $take_notes_1 = $('<img src="./img/tutorial/opera_page_notes/take_notes_1.png">')
+            .css({
+                'top': $topBtn.offset().top + $topBtn.outerHeight()
+            });
+
+        var $take_notes_2 = $('<img src="./img/tutorial/opera_page_notes/take_notes_2.png">')
+            .css({
+                'top': canvas.element.offset().top + canvas.height * 0.7
+            });
+
+        var $take_notes_3 = $('<img src="./img/tutorial/opera_page_notes/take_notes_3.png">')
+            .css({
+                'top': canvas.element.offset().top + canvas.height * 0.2
+            });
+
+        $tutorial.append($take_notes_1, $take_notes_2, $take_notes_3);
+        setOffset($take_notes_1, $topBtn, 0.85);
+        setOffset($take_notes_2, canvas.element);
+        setOffset($take_notes_3, canvas.element, 1);
+    } else if (page === "notes_list") {
+        var $detailsList = $('#detailsList');
+        var $notes_list_1 = $('<img src="./img/tutorial/notes_list/notes_list_1.png">');
+
+        $tutorial.append($notes_list_1);
+        $notes_list_1.on('load', function () {
+            $(this).css('top', $($detailsList.children('li')[0]).offset().top-$notes_list_1.height()*0.9);
+        });
+        setOffset($notes_list_1, $detailsList);
+    } else if (page === "open_note") {
+        var $open_note_1 = $('<img src="./img/tutorial/open_note/open_note_1.png">')
+            .css({
+                'top': $topBtn.offset().top + $topBtn.outerHeight()
+            });
+
+        $tutorial.append($open_note_1);
+        setOffset($open_note_1, $topBtn);
+    } else if (page === "edit_note") {
+        var $edit_note_1 = $('<img src="./img/tutorial/edit_note/edit_note_1.png">')
+            .css({
+                'top': canvas.element.offset().top
+            });
+
+        $tutorial.append($edit_note_1);
+        setOffset($edit_note_1, $topBtn);
+    } else if (page.includes("opera_page")) {
         var $opera_page_1 = $('<img src="./img/tutorial/opera_page/opera_page_1.png">')
             .css({
-                'top': $noteBtn.offset().top + $noteBtn.outerHeight()
+                'top': $topBtn.offset().top + $topBtn.outerHeight()
             });
 
         var $readDescBtn = $('#readDescBtn');
@@ -141,24 +217,32 @@ function showTutorial(page) {
                 'top': $artImage.offset().top + $artImage.outerHeight() - 20
             });
 
-        $tutorial.append([$opera_page_1, $opera_page_2, $opera_page_3]);
-        setOffset($opera_page_1, $noteBtn);
+        $tutorial.append($opera_page_1, $opera_page_2, $opera_page_3);
+        setOffset($opera_page_1, $topBtn);
         setOffset($opera_page_2, $readDescBtn);
         setOffset($opera_page_3, $artImage);
-
     } else {
         var $index1 = $('<img src="./img/tutorial/index/index_1.png">')
             .css({
                 'top': $searchBox.offset().top + $searchBox.outerHeight(),
                 'left': 10
             });
-        var $index2 = $('<img src="./img/tutorial/index/index_2.png">')
+        if ($speakBtn.length) {
+            var $index2 = $('<img src="./img/tutorial/index/index_2.png">')
+                .css({
+                    'top': $speakBtn.offset().top + $speakBtn.outerHeight()
+                });
+        }
+        var $index3 = $('<img src="./img/tutorial/index/index_3.png">')
             .css({
-                'top': $speakBtn.offset().top + $speakBtn.outerHeight()
+                'top': $topBtn.offset().top + $topBtn.outerHeight() / 2
             });
 
-        $tutorial.append([$index1, $index2]);
-        setOffset($index2, $speakBtn);
+        $tutorial.append($index1, $index2, $index3);
+        if ($speakBtn.length) {
+            setOffset($index2, $speakBtn);
+        }
+        $index3.css('left', $topBtn.offset().left - $index3.width())
     }
 
 
