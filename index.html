@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
     <title>WebApp</title>
     <script>
         var currentPage = window.location.pathname;
@@ -18,12 +18,13 @@
 <body>
 <header id="pageTitle">
     <div id="headerWrapper">
-        <h1>Web app - PPM 2019</h1>
+        <h1>Web app - PPM 2020</h1>
     </div>
 </header>
 <main id="wrapper">
     <div id="searchBox">
-        <input type="text" placeholder="Titolo opera, artista, museo, anno...">
+        <input id="searchInput" type="text" placeholder="Titolo opera, artista, museo, anno...">
+        <label for="searchInput">Cerca opera</label>
         <span id="speakBtn"></span>
     </div>
     <div id="filterBox"></div>

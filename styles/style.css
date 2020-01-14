@@ -70,7 +70,7 @@ body {
     display: flex;
     flex-flow: row nowrap;
     align-items: center;
-    flex: 0 0 40px;
+    flex: 0 0 50px;
     width: 100%;
     font-family: 'Lobster', cursive;
     color: #fff;
@@ -107,11 +107,12 @@ body {
 #headerWrapper h1 {
     margin-right: auto;
     margin-left: 15px;
+    font-size: 22px;
 }
 
 #headerWrapper a {
     text-decoration: none;
-    color: #feff9f;
+    color: #ffffde;
 }
 
 #headerWrapper #greet {
@@ -127,11 +128,17 @@ body {
     align-self: flex-start;
     margin-right: 15px;
     padding: 8px;
-    background-color: #3498db;
+    background-color: #002984;
     border-radius: 0 0 4px 4px;
-    color: #feff9f;
+    box-shadow: 0 0 6px 1px black;
+    color: #ffffde;
+    font-size: 22px;
     white-space: nowrap;
     cursor: pointer;
+}
+
+#topBtn.endBtn {
+    background-color: #a02f2f;
 }
 
 #wrapper {
@@ -189,21 +196,28 @@ body {
 
 #searchBox #speakBtn {
     right: 10px;
+    width: 40px;
+    height: 40px;
     mask: url(../img/icons/microphone.svg);
     mask-position: center;
     mask-repeat: no-repeat;
-    mask-size: contain;
+    mask-size: auto;
     -webkit-mask: url(../img/icons/microphone.svg) center no-repeat;
-    -webkit-mask-size: contain;
+    -webkit-mask-size: auto;
 }
 
 #searchBox input {
     width: 80%;
-    height: 40px;
+    height: 50px;
     margin-left: 30px;
     padding: 4px 4px 4px 1px;
     border: none;
     border-radius: 2em;
+    font-size: 14px;
+}
+
+#searchBox input::placeholder {
+    color: #757575;
 }
 
 #searchBox input:disabled {
@@ -212,6 +226,11 @@ body {
 
 #searchBox input:focus {
     outline: none;
+}
+
+#searchBox label {
+    position: absolute;
+    left: -9999999px;
 }
 
 #filterBox {
@@ -239,7 +258,6 @@ footer {
     position: absolute;
     bottom: 20px;
     left: 20px;
-    width: 100%;
     font-family: 'Lobster', cursive;
     color: white;
     z-index: 8;
@@ -294,18 +312,19 @@ footer {
 
 #tutorial img {
     position: absolute;
-    width: 40%;
+    width: 50%;
 }
 
 #tutorial #tutBtn {
     position: absolute;
     bottom: 20px;
     right: 20px;
-    width: 120px;
-    height: 40px;
-    background: cornflowerblue;
-    color: white;
+    width: 150px;
+    height: 50px;
+    background-color: #3f51b5;
     border: 1px solid #fff;
-    border-radius: 4px;
+    border-radius: 50px;
+    color: #fff;
+    font-size: 16px;
     z-index: 9;
 }

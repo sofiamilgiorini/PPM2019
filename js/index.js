@@ -155,17 +155,17 @@ function showTutorial(page) {
     // load correct images based on page
     var $topBtn = $('#topBtn');
     if (page === "take_notes") {
-        var $take_notes_1 = $('<img src="./img/tutorial/opera_page_notes/take_notes_1.png">')
+        var $take_notes_1 = $('<img alt="tutorial" src="./img/tutorial/opera_page_notes/take_notes_1.png">')
             .css({
                 'top': $topBtn.offset().top + $topBtn.outerHeight()
             });
 
-        var $take_notes_2 = $('<img src="./img/tutorial/opera_page_notes/take_notes_2.png">')
+        var $take_notes_2 = $('<img alt="tutorial" src="./img/tutorial/opera_page_notes/take_notes_2.png">')
             .css({
                 'top': canvas.element.offset().top + canvas.height * 0.7
             });
 
-        var $take_notes_3 = $('<img src="./img/tutorial/opera_page_notes/take_notes_3.png">')
+        var $take_notes_3 = $('<img alt="tutorial" src="./img/tutorial/opera_page_notes/take_notes_3.png">')
             .css({
                 'top': canvas.element.offset().top + canvas.height * 0.2
             });
@@ -176,7 +176,7 @@ function showTutorial(page) {
         setOffset($take_notes_3, canvas.element, 1);
     } else if (page === "notes_list") {
         var $detailsList = $('#detailsList');
-        var $notes_list_1 = $('<img src="./img/tutorial/notes_list/notes_list_1.png">');
+        var $notes_list_1 = $('<img alt="tutorial" src="./img/tutorial/notes_list/notes_list_1.png">');
 
         $tutorial.append($notes_list_1);
         $notes_list_1.on('load', function () {
@@ -184,7 +184,7 @@ function showTutorial(page) {
         });
         setOffset($notes_list_1, $detailsList);
     } else if (page === "open_note") {
-        var $open_note_1 = $('<img src="./img/tutorial/open_note/open_note_1.png">')
+        var $open_note_1 = $('<img alt="tutorial" src="./img/tutorial/open_note/open_note_1.png">')
             .css({
                 'top': $topBtn.offset().top + $topBtn.outerHeight()
             });
@@ -192,7 +192,7 @@ function showTutorial(page) {
         $tutorial.append($open_note_1);
         setOffset($open_note_1, $topBtn);
     } else if (page === "edit_note") {
-        var $edit_note_1 = $('<img src="./img/tutorial/edit_note/edit_note_1.png">')
+        var $edit_note_1 = $('<img alt="tutorial" src="./img/tutorial/edit_note/edit_note_1.png">')
             .css({
                 'top': canvas.element.offset().top
             });
@@ -200,19 +200,19 @@ function showTutorial(page) {
         $tutorial.append($edit_note_1);
         setOffset($edit_note_1, $topBtn);
     } else if (page.includes("opera_page")) {
-        var $opera_page_1 = $('<img src="./img/tutorial/opera_page/opera_page_1.png">')
+        var $opera_page_1 = $('<img alt="tutorial" src="./img/tutorial/opera_page/opera_page_1.png">')
             .css({
                 'top': $topBtn.offset().top + $topBtn.outerHeight()
             });
 
         var $readDescBtn = $('#readDescBtn');
-        var $opera_page_2 = $('<img src="./img/tutorial/opera_page/opera_page_2.png">')
+        var $opera_page_2 = $('<img alt="tutorial" src="./img/tutorial/opera_page/opera_page_2.png">')
             .css({
                 'top': $readDescBtn.offset().top + $readDescBtn.outerHeight()
             });
 
         var $artImage = $('#artImage');
-        var $opera_page_3 = $('<img src="./img/tutorial/opera_page/opera_page_3.png">')
+        var $opera_page_3 = $('<img alt="tutorial" src="./img/tutorial/opera_page/opera_page_3.png">')
             .css({
                 'top': $artImage.offset().top + $artImage.outerHeight() - 20
             });
@@ -222,20 +222,21 @@ function showTutorial(page) {
         setOffset($opera_page_2, $readDescBtn);
         setOffset($opera_page_3, $artImage);
     } else {
-        var $index1 = $('<img src="./img/tutorial/index/index_1.png">')
+        var $index1 = $('<img alt="tutorial" src="./img/tutorial/index/index_1.png">')
             .css({
                 'top': $searchBox.offset().top + $searchBox.outerHeight(),
                 'left': 10
             });
         if ($speakBtn.length) {
-            var $index2 = $('<img src="./img/tutorial/index/index_2.png">')
+            var $index2 = $('<img alt="tutorial" src="./img/tutorial/index/index_2.png">')
                 .css({
                     'top': $speakBtn.offset().top + $speakBtn.outerHeight()
                 });
         }
-        var $index3 = $('<img src="./img/tutorial/index/index_3.png">')
+        var $index3 = $('<img alt="tutorial" src="./img/tutorial/index/index_3.png">')
             .css({
-                'top': $topBtn.offset().top + $topBtn.outerHeight() / 2
+                'top': $topBtn.offset().top + $topBtn.outerHeight() / 2 - 10,
+                'width': '60%'
             });
 
         $tutorial.append($index1, $index2, $index3);

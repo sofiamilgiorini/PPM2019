@@ -36,7 +36,7 @@ var canvas = {
                 $detailsList.append($('<li id="'+details[i]["id"]+'">'+details[i]["nome"]+'</li>')
                     .on('click', function () { // redraw details but with the clicked one highlighted
                         var btn = this;
-                        $(this).css('color', 'red');
+                        $(this).css('color', '#ec1f1f');
                         $(this).parent().children().not($(this)).css('color', 'white');
                         canvas.context.fillStyle = "rgba(255, 255, 0, 0.5)";
                         canvas.context.clearRect(0, 0, canvas.width, canvas.height);
@@ -52,7 +52,7 @@ var canvas = {
                         // change topBtn to open detail
                         $('#topBtn')
                             .text("Apri appunto")
-                            .css('background-color', '#a02f2f')
+                            .addClass('endBtn')
                             .off().on('click', function () {
                                 canvas.inDetail = true;
                                 canvas.enlarge();
@@ -92,7 +92,7 @@ var canvas = {
                                         }
                                         canvas.restore();
                                         $(this).text('Prendi appunti')
-                                            .css('background-color', '#3498db')
+                                            .removeClass('endBtn')
                                             .off().on('click', function () {
                                                 startNote($(this), e);
                                         });
@@ -323,7 +323,7 @@ function startNote($t, e) {
     if (e !== undefined)
         e.stopImmediatePropagation();
     $t.text('Fine')
-        .css('background-color', '#a02f2f');
+        .addClass('endBtn');
     canvas.enlarge();
     takeNotes();
     $t.off().on('click', function () {
@@ -342,7 +342,7 @@ function stopNote(e, $t) {
     }
 
     $t.text('Prendi appunti')
-        .css('background-color', '#3498db');
+        .removeClass('endBtn');
     canvas.element.off('touchmove touchstart touchend'); // disable canvas draw interactions
     $.when(fetchDetails()).always(function () {
             canvas.restore();
@@ -430,13 +430,15 @@ function canvasClick(e) {
         }*/
         // draw details boxes
         $('#topBtn').text('Prendi appunti')
-            .css('background-color', '#3498db')
+            .removeClass('endBtn')
             .off().on('click', function (e) {
             startNote($(this), e);
         });
         canvas.toggleDetails();
         if (details.length)
             showTutorial("notes_list");
+    } else {
+        alert("Esegui il login per visualizzare gli appunti presi");
     }
 }
 $('#filterBox').on('click', '.operaCanvas', function (e) {
@@ -702,7 +704,7 @@ function drawInputs(detail, existingDetail, func) {
                 canvas.inDetail = false;
                 canvas.restore();
                 $('#topBtn').text('Prendi appunti')
-                    .css('background-color', '#3498db')
+                    .removeClass('endBtn')
                     .off().on('click', function () {
                     startNote($(this));
                 });
@@ -732,7 +734,7 @@ function drawInputs(detail, existingDetail, func) {
                 canvas.inDetail = false;
                 canvas.restore();
                 $('#topBtn').text('Prendi appunti')
-                    .css('background-color', '#3498db')
+                    .removeClass('endBtn')
                     .off().on('click', function () {
                     startNote($(this));
                 });
